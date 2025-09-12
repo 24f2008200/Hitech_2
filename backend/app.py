@@ -2,19 +2,23 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_bcrypt import Bcrypt
-from flask_jwt_extended import JWTManager
+from backend.extensions import db, bcrypt, jwt
 
-db = SQLAlchemy()
-bcrypt = Bcrypt()
-jwt = JWTManager()
+basedir = os.path.abspath(os.path.dirname(__file__))
+
+
+
 
 def create_app():
     app = Flask(__name__)
+    app = Flask(__name__, instance_relative_config=True)
+    db_path = os.path.join(app.instance_path, 'vehicle_parking.db')
+    os.makedirs(app.instance_path, exist_ok=True)
+    
 
     # Config
     app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "devsecret")
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///vehicle_parking.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = 'super-secret-key'  # replace with env variable later
 
@@ -24,15 +28,14 @@ def create_app():
     jwt.init_app(app)
     Migrate(app, db)
 
-    # Register blueprints
-    from routes.auth_routes import auth_bp
-    from routes.parking_routes import parking_bp
-    from routes.reservation_routes import reservation_bp
+    from backend.routes.auth_routes import auth_bp
+    from backend.routes.parking_routes import parking_bp
+    from backend.routes.reservation_routes import reservation_bp
 
-    app.register_blueprint(auth_bp, url_prefix="/auth")
-    app.register_blueprint(parking_bp, url_prefix="/parking")
-    app.register_blueprint(reservation_bp, url_prefix="/reservation")
-
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(parking_bp)
+    app.register_blueprint(reservation_bp)
+    print("Registered blueprints")
     return app
 
 if __name__ == "__main__":
