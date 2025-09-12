@@ -47,17 +47,19 @@ class Reservation(db.Model):
     __tablename__ = "reservation"
 
     id = db.Column(db.Integer, primary_key=True)
-    spot_id = db.Column(db.Integer, db.ForeignKey("parking_spot.id"), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    start_ts = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    end_ts = db.Column(db.DateTime, nullable=True)
-    parking_cost = db.Column(db.Float, nullable=True)
+    spot_id = db.Column(db.Integer, db.ForeignKey("parking_spot.id"), nullable=False)
+    vehicle_number = db.Column(db.String(20), nullable=False)   # NEW
+    start_time = db.Column(db.DateTime, default=datetime.utcnow)
+    end_time = db.Column(db.DateTime, nullable=True)
+    parking_fee = db.Column(db.Float, nullable=True)
     active = db.Column(db.Boolean, default=True)
 
-    spot = db.relationship("ParkingSpot")
-    user = db.relationship("User")
+    # Relationships
+    user = db.relationship("User", backref="reservations")
+    spot = db.relationship("ParkingSpot", backref="reservation")
 
-    def end_reservation(self, end_time, cost: float):
-        self.end_ts = end_time
-        self.parking_cost = cost
-        self.active = False
+    # def end_reservation(self, end_time, cost: float):
+    #     self.end_time = end_time
+    #     self.parking_fee = cost
+    #     self.active = False

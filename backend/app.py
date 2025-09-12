@@ -3,6 +3,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from backend.extensions import db, bcrypt, jwt
+from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -10,6 +11,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 def create_app():
+    load_dotenv()
     app = Flask(__name__)
     app = Flask(__name__, instance_relative_config=True)
     db_path = os.path.join(app.instance_path, 'vehicle_parking.db')
@@ -20,7 +22,7 @@ def create_app():
     app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "devsecret")
     app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['JWT_SECRET_KEY'] = 'super-secret-key'  # replace with env variable later
+    app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY", "super-secret-key")
 
     # Init extensions
     db.init_app(app)
