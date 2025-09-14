@@ -1,17 +1,12 @@
-# backend/routes/auth_routes.py
-# from flask import Blueprint, request, jsonify
-# from backend.app import db, bcrypt
-# from backend.models import User
-# from flask_jwt_extended import create_access_token
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from backend.extensions import db, bcrypt  
 from backend.models import User
 from flask_jwt_extended import create_access_token
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
-# Register
+# Register 
 @auth_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
@@ -25,7 +20,7 @@ def register():
     user = User(
         email=data["email"],
         name=data.get("name", ""),
-        password_hash=hashed_password,
+        password=hashed_password,
         is_admin=False
     )
     db.session.add(user)
@@ -38,11 +33,12 @@ def register():
 @auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
+    print(data)
     if not data or "email" not in data or "password" not in data:
         return jsonify({"error": "Email and password required"}), 400
 
     user = User.query.filter_by(email=data["email"]).first()
-    if not user or not bcrypt.check_password_hash(user.password_hash, data["password"]):
+    if not user or not user.check_password(data["password"]):
         return jsonify({"error": "Invalid credentials"}), 401
 
     token = create_access_token(identity={"id": user.id, "email": user.email, "is_admin": user.is_admin})
@@ -56,3 +52,11 @@ def login():
             "is_admin": user.is_admin
         }
     }), 200
+@auth_bp.route("/logout", methods=["POST"])
+def logout():
+    session.pop("user", None)
+    return jsonify({"message": "Logged out"})
+
+@auth_bp.route("/api/ping", methods=["GET", "OPTIONS"])
+def ping():
+    return {"message": "pong"}

@@ -2,27 +2,33 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_cors import CORS
 from backend.extensions import db, bcrypt, jwt
 from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+INSTANCE_DIR = os.path.join(os.path.dirname(BASE_DIR), "instance")
+os.makedirs(INSTANCE_DIR, exist_ok=True)
+
 
 
 
 
 def create_app():
     load_dotenv()
-    app = Flask(__name__)
     app = Flask(__name__, instance_relative_config=True)
-    db_path = os.path.join(app.instance_path, 'vehicle_parking.db')
-    os.makedirs(app.instance_path, exist_ok=True)
-    
+    CORS(app,
+     resources={r"/*": {"origins": "http://localhost:5173"}},
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"])
 
     # Config
     app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "devsecret")
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY", "super-secret-key")
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(INSTANCE_DIR, 'vehicle_parking.db')}"
 
     # Init extensions
     db.init_app(app)
@@ -31,11 +37,11 @@ def create_app():
     Migrate(app, db)
 
     from backend.routes.auth_routes import auth_bp
-    from backend.routes.parking_routes import parking_bp
+    from backend.routes.admin_routes import admin_bp
     from backend.routes.reservation_routes import reservation_bp
 
     app.register_blueprint(auth_bp)
-    app.register_blueprint(parking_bp)
+    app.register_blueprint(admin_bp)
     app.register_blueprint(reservation_bp)
     print("Registered blueprints")
     return app

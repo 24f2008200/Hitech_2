@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime
 from backend.app import db
 from backend.models import Reservation, ParkingSpot, ParkingLot
-from backend.utils.auth import auth_required, admin_required, current_user
+from backend.routes.utils.auth import auth_required, admin_required, current_user
 
 reservation_bp = Blueprint("reservation", __name__, url_prefix="/reservation")
 
@@ -67,7 +67,7 @@ def release_spot(res_id):
     reservation.spot.status = "A"
 
     # Calculate cost (duration * lot price)
-    lot_price = reservation.spot.lot.price_per_hour
+    lot_price = reservation.spot.lot.price
     duration_hours = (reservation.end_time - reservation.start_time).total_seconds() / 3600
     reservation.parking_fee = round(duration_hours * lot_price, 2)
 

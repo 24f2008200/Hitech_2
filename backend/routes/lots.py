@@ -10,8 +10,8 @@ def get_lots():
     lots = ParkingLot.query.all()
     return jsonify([{
         "id": l.id,
-        "name": l.prime_location_name,
-        "price": l.price_per_hour,
+        "name": l.name,
+        "price": l.price,
         "spots": l.number_of_spots,
         "address": l.address,
         "pincode": l.pin_code
@@ -27,8 +27,8 @@ def create_lot():
 
     data = request.get_json()
     lot = ParkingLot(
-        prime_location_name=data["name"],
-        price_per_hour=data["price"],
+        name=data["name"],
+        price=data["price"],
         address=data.get("address"),
         pin_code=data.get("pincode"),
         number_of_spots=data.get("spots", 0),
