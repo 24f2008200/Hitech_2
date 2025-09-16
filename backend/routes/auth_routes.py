@@ -45,16 +45,19 @@ def login():
         identity=str(user.id),  
         additional_claims={
         "email": user.email,
+        "role": user.role,
         "is_admin": user.is_admin
         }
     )
-    print(user.id, user.email, user.is_admin)
+    print(user.id, user.email, user.role)
     return jsonify({
         "access_token": token,
         "user": {
             "id": str(user.id),
             "email": user.email,
             "name": user.name,
+            "role": user.role,
+            "mobile": user.mobile,
             "is_admin": user.is_admin
         }
     }), 200
@@ -66,3 +69,4 @@ def logout():
 @auth_bp.route("/api/ping", methods=["GET", "OPTIONS"])
 def ping():
     return {"message": "pong"}
+

@@ -1,39 +1,85 @@
 <template>
-  <div class="container mt-5" style="max-width: 400px;">
-    <h2>Login</h2>
-    <form @submit.prevent="login">
+  <div class="container mt-5" style="max-width: 500px;">
+    <h2 class="mb-4">User Registration</h2>
+
+    <form @submit.prevent="handleRegister">
       <div class="mb-3">
-        <label>Email</label>
-        <input v-model="email" type="email" class="form-control" required />
+        <label class="form-label">Name</label>
+        <input v-model="form.name" type="text" class="form-control" required />
       </div>
+
       <div class="mb-3">
-        <label>Password</label>
-        <input v-model="password" type="password" class="form-control" required />
+        <label class="form-label">Email</label>
+        <input v-model="form.email" type="email" class="form-control" required />
       </div>
-      <button class="btn btn-primary w-100" type="submit">Login</button>
+
+      <div class="mb-3">
+        <label class="form-label">Mobile</label>
+        <input v-model="form.mobile" type="text" class="form-control" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Address</label>
+        <input v-model="form.address" type="text" class="form-control" />
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input v-model="form.password" type="password" class="form-control" required />
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100">Register</button>
     </form>
+
+    <!-- Success / Error messages -->
+    <div v-if="message" class="alert mt-3"
+         :class="{'alert-success': success, 'alert-danger': !success}">
+      {{ message }}
+    </div>
   </div>
 </template>
 
-<script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+<script>
+export default {
+  name: "Register",
+  data() {
+    return {
+      form: {
+        name: "",
+        email: "",
+        mobile: "",
+        address: "",
+        password: ""
+      },
+      message: "",
+      success: false
+    }
+  },
+  methods: {
+    async handleRegister() {
+      try {
+        const response = await fetch("http://localhost:5000/user/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(this.form)
+        })
 
-const email = ref("");
-const password = ref("");
-const router = useRouter();
+        const data = await response.json()
 
-async function login() {
-  // ⚡ Hook this to your Flask backend later
-  console.log("Logging in:", email.value);
-
-  // Fake login → admin if email contains "admin"
-  if (email.value.includes("admin")) {
-    localStorage.setItem("is_admin", "true");
-    router.push("/admin");
-  } else {
-    localStorage.setItem("is_admin", "false");
-    router.push("/user");
+        if (response.ok) {
+          this.success = true
+          this.message = data.message || "Registration successful!"
+          this.form = { name: "", email: "", mobile: "", address: "", password: "" }
+        } else {
+          this.success = false
+          this.message = data.error || "Registration failed"
+        }
+      } catch (err) {
+        console.error("Error during registration:", err)
+        this.success = false
+        this.message = "Server error. Please try again."
+      }
+    }
   }
 }
 </script>

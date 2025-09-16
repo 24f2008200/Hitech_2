@@ -21,11 +21,13 @@
           <tbody>
             <tr v-for="r in reservations" :key="r.id">
               <td>{{ r.id }}</td>
-              <td>{{ r.spot_id }}</td>
+              <td>{{ r.lot_id }}</td>
               <td>{{ r.vehicle_number }}</td>
               <td>{{ r.start_time }}</td>
+              <td>{{ r.end_time }}</td>
+              <td>{{ r.status}}</td>
               <td>
-                <button v-if="r.active" class="btn btn-sm btn-danger" @click="releaseSpot(r.id)">
+                <button v-if="r.status === 'active'" class="btn btn-sm btn-danger" @click="releaseSpot(r.id)">
                   Release
                 </button>
                 <span v-else class="badge bg-success">Parked Out</span>
@@ -67,12 +69,12 @@
                     <input v-model="form.vehicle_no" type="text" class="form-control" required />
                   </div>
                   <div class="mb-3">
-                    <label class="form-label">User Name</label>
-                    <input v-model="form.user_name" type="text" class="form-control" required />
+                    <label class="form-label">Driver Name</label>
+                    <input v-model="form.driver_name" type="text" class="form-control" required />
                   </div>
                   <div class="mb-3">
-                    <label class="form-label">User ID</label>
-                    <input v-model="form.user_id" type="text" class="form-control" required />
+                    <label class="form-label">Driver Contact</label>
+                    <input v-model="form.driver_contact" type="text" class="form-control" required />
                   </div>
                 </form>
               </div>
@@ -151,7 +153,9 @@ function openBookingModal(lot) {
 // Confirm booking
 async function confirmBooking() {
   if (!selectedLot.value) return;
-
+  const current_user = JSON.parse(localStorage.getItem("current_user"));
+  form.value.user_name = current_user.name;
+  form.value.user_id = current_user.id;
   const res = await fetch("http://localhost:5000/user/book", {
     method: "POST",
     headers: {
@@ -162,13 +166,16 @@ async function confirmBooking() {
       lot_id: selectedLot.value.id,
       vehicle_no: form.value.vehicle_no,
       user_name: form.value.user_name,
-      user_id: form.value.user_id
+      user_id: form.value.user_id,
+      driver_contact: form.value.driver_contact,
+      driver_name: form.value.driver_name
     })
   });
 
   if (res.ok) {
     alert("Slot booked successfully!");
     bookingModal.value.hide();
+    fetchReservations(); // refresh reservations
     fetchLots(); // refresh list of lots
   } else {
     alert("Failed to book slot");
@@ -187,17 +194,18 @@ async function fetchReservations() {
 // Release a spot
 async function releaseSpot(reservationId) {
   const res = await fetch(
-    `http://localhost:5000/user/reservations/${reservationId}/release`,
+    `http://localhost:5000/user/release/${reservationId}`,
     {
-      method: "PATCH",
+      method: "POST",
       headers: { Authorization: `Bearer ${token.value}` },
     }
   );
   if (res.ok) {
     reservations.value = reservations.value.map((r) =>
-      r.id === reservationId ? { ...r, active: false } : r
+      r.id === reservationId ? { ...r, status: 'completed' } : r
     );
   }
+  //fetchReservations();
 }
 
 // Fetch pin codes
@@ -224,21 +232,7 @@ async function fetchLots() {
   }
 }
 
-// Book a spot
-async function bookSpot(lotId) {
-  const res = await fetch(`http://localhost:5000/user/reservations`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token.value}`,
-    },
-    body: JSON.stringify({ lot_id: lotId }),
-  });
-  if (res.ok) {
-    fetchReservations(); // refresh reservations
-    fetchLots(); // refresh availability
-  }
-}
+
 
 onMounted(() => {
   fetchReservations();

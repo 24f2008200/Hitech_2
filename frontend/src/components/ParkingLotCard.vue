@@ -25,27 +25,7 @@
   </div>
 </template>
 
-<!-- <script>
-export default {
-  name: "ParkingLotCard",
-  props: {
-    lot: { type: Object, required: true }
-  },
-  emits: ["edit-lot", "delete-lot", "slot-click"],
-  methods: {
-    openEditModal(lot) {
-      console.log("Child emitting edit-lot:", lot)
-      this.$emit("edit-lot", lot);
-    },
-    deleteLot(id) {
-      this.$emit("delete-lot", id);
-    },
-    clickSlot(slot) {
-      this.$emit('slot-click', slot)
-    }
-  }
-}
-</script> -->
+
 
 <script setup>
 import { defineProps, defineEmits } from "vue";
@@ -73,8 +53,8 @@ function deleteLot(id) {
 }
 
 function clickSlot(slot) {
-  console.log("Child emitting slot-click:", slot);
-  emit("slot-click", slot);
+  console.log("Child emitting slot-click:", props.lot);
+  emit("slot-click", slot, props.lot);
 }
 </script>
 

@@ -9,11 +9,13 @@ import Search from "../views/Search.vue";
 import Summary from "../views/Summary.vue";
 import Profile from "../views/Profile.vue";
 
+
+
 const routes = [
   // Public (general) routes
   { path: "/", component: Home },
   { path: "/login", component: Login },
-  { path: "/register", component: Register },
+  { path: "/register", name: "Register", component: Register },
 
   // User routes
   { path: "/user", component: UserDashboard, meta: { requiresAuth: true, role: "user" } },

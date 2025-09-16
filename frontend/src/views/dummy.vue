@@ -1,51 +1,85 @@
-import { ref } from "vue";
-import { useAuth } from "../stores/auth";
-import * as bootstrap from "bootstrap";
+<template>
+  <div class="container mt-5" style="max-width: 500px;">
+    <h2 class="mb-4">User Registration</h2>
 
-const { token } = useAuth();
+    <form @submit.prevent="handleRegister">
+      <div class="mb-3">
+        <label class="form-label">Name</label>
+        <input v-model="form.name" type="text" class="form-control" required />
+      </div>
 
-// state for modal + form
-const selectedLot = ref(null);
-const bookingModal = ref(null);
-const form = ref({
-  vehicle_no: "",
-  user_name: "",
-  user_id: ""
-});
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input v-model="form.email" type="email" class="form-control" required />
+      </div>
 
-// Open modal
-function openBookingModal(lot) {
-  selectedLot.value = lot;
-  form.value = { vehicle_no: "", user_name: "", user_id: "" };
+      <div class="mb-3">
+        <label class="form-label">Telephone</label>
+        <input v-model="form.telephone" type="text" class="form-control" />
+      </div>
 
-  const modalEl = document.getElementById("bookingModal");
-  bookingModal.value = new bootstrap.Modal(modalEl);
-  bookingModal.value.show();
-}
+      <div class="mb-3">
+        <label class="form-label">Address</label>
+        <input v-model="form.address" type="text" class="form-control" />
+      </div>
 
-// Confirm booking
-async function confirmBooking() {
-  if (!selectedLot.value) return;
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input v-model="form.password" type="password" class="form-control" required />
+      </div>
 
-  const res = await fetch("http://localhost:5000/user/reservations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token.value}`
-    },
-    body: JSON.stringify({
-      lot_id: selectedLot.value.id,
-      vehicle_no: form.value.vehicle_no,
-      user_name: form.value.user_name,
-      user_id: form.value.user_id
-    })
-  });
+      <button type="submit" class="btn btn-primary w-100">Register</button>
+    </form>
 
-  if (res.ok) {
-    alert("Slot booked successfully!");
-    bookingModal.value.hide();
-    fetchLots(); // refresh list of lots
-  } else {
-    alert("Failed to book slot");
+    <!-- Success / Error messages -->
+    <div v-if="message" class="alert mt-3"
+         :class="{'alert-success': success, 'alert-danger': !success}">
+      {{ message }}
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: "Register",
+  data() {
+    return {
+      form: {
+        name: "",
+        email: "",
+        telephone: "",
+        address: "",
+        password: ""
+      },
+      message: "",
+      success: false
+    }
+  },
+  methods: {
+    async handleRegister() {
+      try {
+        const response = await fetch("http://localhost:5000/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(this.form)
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          this.success = true
+          this.message = data.message || "Registration successful!"
+          this.form = { name: "", email: "", telephone: "", address: "", password: "" }
+        } else {
+          this.success = false
+          this.message = data.error || "Registration failed"
+        }
+      } catch (err) {
+        console.error("Error during registration:", err)
+        this.success = false
+        this.message = "Server error. Please try again."
+      }
+    }
   }
 }
+</script>

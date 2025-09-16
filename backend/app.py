@@ -19,16 +19,20 @@ os.makedirs(INSTANCE_DIR, exist_ok=True)
 def create_app():
     load_dotenv()
     app = Flask(__name__, instance_relative_config=True)
+
     CORS(app,
      resources={r"/*": {"origins": "http://localhost:5173"}},
      supports_credentials=True,
-     allow_headers=["Content-Type", "Authorization"])
+     allow_headers=["Content-Type", "Authorization", "X-Requested-With"])
+
 
     # Config
     app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "devsecret")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY", "super-secret-key")
     app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(INSTANCE_DIR, 'vehicle_parking.db')}"
+    app.config["CORS_AUTOMATIC_OPTIONS"] = True
+
 
     # Init extensions
     db.init_app(app)

@@ -52,7 +52,7 @@ async function doLogin() {
 
     login(data);
     localStorage.setItem("access_token", data.access_token);
-    localStorage.setItem("is_admin", data.user.is_admin);
+    localStorage.setItem("current_user", JSON.stringify(data.user));
 
     // Redirect based on role
     if (data.user.is_admin) {

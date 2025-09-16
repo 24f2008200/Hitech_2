@@ -7,7 +7,8 @@
         @delete-lot="handleDeleteLot" @slot-click="showSlotDetails" />
     </div>
     <!-- Popup modal -->
-    <SlotDetailModal :visible="isModalOpen" :slot="selectedSlot" :reservation="selectedReservation" @close="isModalOpen = false" />
+    <SlotDetailModal :visible="isModalOpen" :slot="selectedSlot" :lot="selectedLot"
+      @deleteSlot="handleDeleteSlot" @close="isModalOpen = false" />
     <!-- Add Lot Button -->
     <div class="text-center mt-4">
       <!-- <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#lotModal" @click="handleEditLot(null)">  -->
@@ -30,6 +31,11 @@
                 <label class="form-label">Name</label>
                 <input v-model="formLot.name" type="text" class="form-control" required />
               </div>
+              <div class="mb-3">
+                <label class="form-label">Prefix</label>
+                <input v-model="formLot.prefix" type="text" class="form-control" required />
+              </div>
+              
               <div class="mb-3">
                 <label class="form-label">Address</label>
                 <input v-model="formLot.address" type="text" class="form-control" required />
@@ -71,7 +77,7 @@ const lots = ref([]) // fetched from API
 
 const isModalOpen = ref(false)
 const selectedSlot = ref({})
-const selectedReservation = ref({})
+const selectedLot = ref({})
 
 
 export default {
@@ -85,7 +91,7 @@ export default {
       editId: null,
       isModalOpen: false,
       selectedSlot: {},
-      selectedReservation: null 
+      selectedReservation: null
     }
 
   },
@@ -107,12 +113,13 @@ export default {
         console.error("Error fetching lots:", err)
       }
     },
-    showSlotDetails(slot) {
+    showSlotDetails(slot, lot) {
       console.log("Slot clicked:", slot)
       this.selectedSlot = slot
-      this.selectedReservation = slot.current_reservation
+      this.selectedLot = lot
       this.isModalOpen = true
     },
+
     showModal() {
       const modalEl = document.getElementById('lotModal')
       const modal = Modal.getOrCreateInstance(modalEl) // one instance
@@ -143,13 +150,25 @@ export default {
       const token = localStorage.getItem("access_token")
       let url, method
       if (this.isEdit) {
-        url = `http://localhost:5000/admin/lots/${this.editId}`
-        method = "PUT"
+        this.handleUpdates(`http://localhost:5000/admin/lots/${this.editId}`, "PUT", this.formLot)
       } else {
-        url = "http://localhost:5000/admin/lots"
-        method = "POST"
+        this.handleUpdates("http://localhost:5000/admin/lots", "POST", this.formLot)
       }
-      console.log("Submitting to:", url, method, this.formLot)
+      this.closeModalAndRefresh()
+    },
+    async handleDeleteLot(id) {
+      const token = localStorage.getItem("access_token")
+      if (!confirm("Are you sure you want to delete this lot?")) return
+      this.handleUpdates(`http://localhost:5000/admin/lots/${id}`, "DELETE", null)
+    },
+    async handleDeleteSlot(slot) {
+      const token = localStorage.getItem("access_token")
+      if (!confirm("Are you sure you want to delete this slot?")) return
+      this.isModalOpen = false
+      this.handleUpdates(`http://localhost:5000/admin/slots/${slot.id}`, "DELETE", null)
+    },
+    async handleUpdates(url, method, data) {
+      const token = localStorage.getItem("access_token")
       try {
         const res = await fetch(url, {
           method: method,
@@ -157,33 +176,15 @@ export default {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${token}`
           },
-          body: JSON.stringify(this.formLot)
-        })
-
-        if (res.ok) {
-          await this.closeModalAndRefresh()
-        } else {
-          console.error("Failed to update lot")
-        }
-      } catch (err) {
-        console.error("Error updating lot:", err)
-      }
-    },
-    async handleDeleteLot(id) {
-      const token = localStorage.getItem("access_token")
-      if (!confirm("Are you sure you want to delete this lot?")) return
-      try {
-        const res = await fetch(`http://localhost:5000/admin/lots/${id}`, {
-          method: "DELETE",
-          headers: { "Authorization": `Bearer ${token}` }
+          body: JSON.stringify(data)
         })
         if (res.ok) {
           await this.fetchLots()
         } else {
-          console.error("Failed to delete lot")
+          console.error("Failed to perform operation")
         }
       } catch (err) {
-        console.error("Error deleting lot:", err)
+        console.error("Error performing operation:", err)
       }
     },
     async closeModalAndRefresh() {

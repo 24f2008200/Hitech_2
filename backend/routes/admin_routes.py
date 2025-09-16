@@ -14,17 +14,19 @@ def create_lot():
     data = request.json
     lot = ParkingLot(
         name=data["name"],
+        prefix=data.get("prefix"),
         price=data["price"],
         address=data.get("address"),
         pin_code=data.get("pin_code"),
-        number_of_spots=data.get("number_of_spots", 0),
+        max_slots=data.get("number_of_spots", 0),
+        created_at=func.now()
     )
     db.session.add(lot)
     db.session.commit()
 
     # Create spots
     for i in range(lot.number_of_spots):
-        spot = ParkingSpot(lot_id=lot.id, label=f"Spot-{i+1}")
+        spot = ParkingSpot(lot_id=lot.id, label=f"{lot.prefix}pot-{i+1}")
         db.session.add(spot)
     db.session.commit()
 
@@ -61,20 +63,6 @@ def list_users():
     return jsonify([{"id": u.id, "email": u.email, "name": u.name} for u in users])
 
 
-    total_lots = ParkingLot.query.count()
-    total_spots = ParkingSpot.query.count()
-    occupied = ParkingSpot.query.filter_by(is_occupied=True).count()
-    free = total_spots - occupied
-    revenue = db.session.query(db.func.sum(Reservation.cost)).scalar() or 0
-
-    return jsonify({
-        "total_lots": total_lots,
-        "total_spots": total_spots,
-        "occupied_spots": occupied,
-        "free_spots": free,
-        "revenue": revenue
-    })
-
 @admin_bp.route("/search", methods=["GET"])
 @admin_required
 def search_users():
@@ -97,6 +85,17 @@ def search_users():
         for u in results
     ])
 
+# Delete parking slot
+@admin_bp.route("/slots/<int:slot_id>", methods=["DELETE"])
+@admin_required
+def delete_parking_slot(slot_id):
+    slot = ParkingSpot.query.get_or_404(int(slot_id))
+    if slot.status == "O":
+        return jsonify({"error": "Cannot delete occupied slot"}), 400
+    lot = slot.lot
+    lot.delete_spot(slot.id)  
+    db.session.commit()
+    return jsonify({"message": "Parking slot deleted"}), 200
 
 # Update parking lot
 @admin_bp.route("/lots/<int:lot_id>", methods=["PUT"])
@@ -104,29 +103,15 @@ def search_users():
 def update_parking_lot(lot_id):
     lot = ParkingLot.query.get_or_404(lot_id)
     data = request.get_json()
+    try :
+        lot.resize_spots(data.get("number_of_spots", lot.number_of_spots))
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
 
     lot.name = data.get("name", lot.name)
     lot.price = data.get("price", lot.price)
     lot.address = data.get("address", lot.address)
     lot.pin_code = data.get("pin_code", lot.pin_code)
-
-    # Adjust number of spots if changed
-    new_spot_count = data.get("number_of_spots", lot.number_of_spots)
-    if new_spot_count > lot.number_of_spots:
-        # Add new spots
-        for i in range(lot.number_of_spots, new_spot_count):
-            spot = ParkingSpot(lot_id=lot.id, status="A", label=f"Spot-{i+1}")
-            db.session.add(spot)
-    elif new_spot_count < lot.number_of_spots:
-        # Remove extra spots (only if available)
-        removable = ParkingSpot.query.filter_by(lot_id=lot.id, status="A").all()
-        to_remove = lot.number_of_spots - new_spot_count
-        if len(removable) < to_remove:
-            return jsonify({"error": "Not enough available spots to remove"}), 400
-        for spot in removable[:to_remove]:
-            db.session.delete(spot)
-
-    lot.number_of_spots = new_spot_count
     db.session.commit()
 
     return jsonify({"message": "Parking lot updated"}), 200
@@ -197,3 +182,52 @@ def list_reservations():
         for r in reservations
     ])
 
+@admin_bp.route("/search/users", methods=["GET"])
+@admin_required
+def search_users_admin():
+    search_by = request.args.get("search_by")
+    value = request.args.get("value")
+
+    query = User.query
+    if search_by == "name":
+        query = query.filter(User.name.ilike(f"%{value}%"))
+    elif search_by == "telephone":
+        query = query.filter(User.mobile.ilike(f"%{value}%"))
+    elif search_by == "address":
+        query = query.filter(User.address.ilike(f"%{value}%"))
+    elif search_by == "vehicle":
+        query = query.join(Reservation).filter(Reservation.vehicle_number.ilike(f"%{value}%"))
+    elif search_by == "parking_lot":
+        query = query.join(Reservation).join(ParkingSpot).join(ParkingLot).filter(ParkingLot.name.ilike(f"%{value}%"))
+    elif search_by == "mobile":
+        query = query.filter(User.mobile.ilike(f"%{value}%"))
+    elif search_by == "email":
+        query = query.filter(User.email.ilike(f"%{value}%"))
+    elif search_by == "driver":
+        query = query.join(Reservation).filter(Reservation.driver_name.ilike(f"%{value}%"))
+    elif search_by == "parking_lot":
+        query = query.join(Reservation).join(ParkingSpot).join(ParkingLot).filter(ParkingLot.name.ilike(f"%{value}%"))
+
+    return jsonify([u.to_dict() for u in query.all()])
+
+@admin_bp.route("/search/bookings", methods=["GET"])
+@admin_required
+def search_bookings_admin():
+    search_by = request.args.get("search_by")
+    value = request.args.get("value")
+
+    query = Reservation.query.join(User)
+    if search_by == "name":
+        query = query.filter(User.name.ilike(f"%{value}%"))
+    elif search_by == "mobile":
+        query = query.filter(User.mobile.ilike(f"%{value}%"))
+    elif search_by == "address":
+        query = query.filter(User.address.ilike(f"%{value}%"))
+    elif search_by == "vehicle_number":
+        query = query.filter(Reservation.vehicle_number.ilike(f"%{value}%"))
+    elif search_by == "driver":
+        query = query.filter(Reservation.driver_name.ilike(f"%{value}%"))
+    elif search_by == "parking_lot":
+        query = query.join(ParkingSpot).join(ParkingLot).filter(ParkingLot.name.ilike(f"%{value}%"))
+
+    return jsonify([r.to_dict() for r in query.all()])

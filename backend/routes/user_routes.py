@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
+from werkzeug.security import generate_password_hash
 from datetime import datetime
 from backend.app import db
-from backend.models import Reservation, ParkingSpot, ParkingLot
+from backend.models import Reservation, ParkingSpot, ParkingLot,User
 from backend.routes.utils.auth import auth_required, admin_required, current_user
 
 user_bp = Blueprint("user", __name__, url_prefix="/user")
@@ -17,6 +18,9 @@ def book_spot():
     lot_id = data.get("lot_id")
     vehicle_number = data.get("vehicle_no")
     request_user_id = data.get("user_id")
+    driver_name = data.get("driver_name")
+    driver_contact = data.get("driver_contact")
+
     print(request_user_id, user.id)
     print(lot_id, vehicle_number)
     if not request_user_id or user.id != int(request_user_id):
@@ -39,7 +43,9 @@ def book_spot():
         user_id=user.id,
         spot_id=spot.id,
         vehicle_number=vehicle_number,
-        start_time=datetime.utcnow()
+        start_time=datetime.utcnow(),
+        driver_name=driver_name,
+        driver_contact=driver_contact
     )
     spot.status = "O"
 
@@ -59,7 +65,7 @@ def book_spot():
 @auth_required
 def release_spot(res_id):
     user = current_user()
-    reservation = db.session.get(Reservation, res_id)
+    reservation = db.session.get(Reservation, int(res_id))
 
     if not reservation:
         return jsonify({"error": "Reservation not found"}), 404
@@ -134,3 +140,28 @@ def list_lots():
 def list_pin_codes():
     pin_codes = db.session.query(ParkingLot.pin_code).distinct().all()
     return jsonify([p[0] for p in pin_codes]), 200  
+
+@user_bp.route("/register", methods=["POST"])
+def register():
+    data = request.get_json()
+
+    if not data.get("email") or not data.get("password"):
+        return jsonify({"error": "Email and password required"}), 400
+
+    if User.query.filter_by(email=data["email"]).first():
+        return jsonify({"error": "Email already registered"}), 400
+
+    user = User(
+        name=data.get("name"),
+        email=data["email"],
+        mobile=data.get("mobile"),
+        address=data.get("address"),
+        password=generate_password_hash(data["password"]),
+        role=data.get("role", "user")
+        
+    )
+
+    db.session.add(user)
+    db.session.commit()
+
+    return jsonify({"message": "User registered successfully"}), 201
