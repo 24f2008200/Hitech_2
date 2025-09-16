@@ -1,28 +1,11 @@
-# Ignore system files
-desktop.ini
-Thumbs.db
-
-# Ignore Python cache
-__pycache__/
+# Global ignores
 *.pyc
-
-# Ignore local configs
-.env
-*.sqlite3
-
-# Ignore other files
+__pycache__/
+*.ini
 *.log
-*.pot
-*.pyc
-*.pyo
-*.pyd
-__pycache__/
+*.sqlite3
 *.db
-
-# Ignore VS Code settings
-.vscode/
-.venv/
-
-*.txt
-get_pip.py
-COMMIT_EDITMSG.*
+.DS_Store
+.env
+venv/
+node_modules/

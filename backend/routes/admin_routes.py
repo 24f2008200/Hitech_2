@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from sqlalchemy import func
 from backend.app import db
 from backend.models import ParkingLot, ParkingSpot, Reservation, User
 from backend.routes.utils.auth import auth_required , admin_required
@@ -8,7 +9,6 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 # Create parking lot
 @admin_bp.route("/lots", methods=["POST"])
-@auth_required
 @admin_required
 def create_lot():
     data = request.json
@@ -32,7 +32,6 @@ def create_lot():
 
 # Get all parking lots with their spots
 @admin_bp.route("/lots", methods=["GET"])
-@auth_required
 @admin_required
 def list_lots():
     lots = ParkingLot.query.all()
@@ -62,10 +61,6 @@ def list_users():
     return jsonify([{"id": u.id, "email": u.email, "name": u.name} for u in users])
 
 
-# Summary data
-@admin_bp.route("/summary", methods=["GET"])
-@admin_required
-def summary():
     total_lots = ParkingLot.query.count()
     total_spots = ParkingSpot.query.count()
     occupied = ParkingSpot.query.filter_by(is_occupied=True).count()
@@ -80,11 +75,31 @@ def summary():
         "revenue": revenue
     })
 
+@admin_bp.route("/search", methods=["GET"])
+@admin_required
+def search_users():
+    current_user = admin_required()
+    if isinstance(current_user, tuple):
+        return current_user
+
+    query = request.args.get("query", "").strip()
+    if not query:
+        return jsonify([])
+
+    results = User.query.filter(
+        (User.email.ilike(f"%{query}%")) |
+        (User.phone.ilike(f"%{query}%")) |
+        (User.name.ilike(f"%{query}%"))
+    ).all()
+
+    return jsonify([
+        {"id": u.id, "email": u.email, "phone": u.phone, "name": u.name}
+        for u in results
+    ])
 
 
 # Update parking lot
 @admin_bp.route("/lots/<int:lot_id>", methods=["PUT"])
-@auth_required
 @admin_required
 def update_parking_lot(lot_id):
     lot = ParkingLot.query.get_or_404(lot_id)
@@ -118,7 +133,6 @@ def update_parking_lot(lot_id):
 
 # Delete parking lot
 @admin_bp.route("/lots/<int:lot_id>", methods=["DELETE"])
-@auth_required
 @admin_required
 def delete_parking_lot(lot_id):
     lot = db.session.get(ParkingLot, lot_id)
@@ -132,22 +146,39 @@ def delete_parking_lot(lot_id):
     db.session.commit()
     return jsonify({"message": "Lot deleted"}), 200
 
-# List parking lots
-# @admin_bp.route("/lots", methods=["GET"])
-# @auth_required
-# def list_lots():
-#     lots = ParkingLot.query.all()
-#     return jsonify([{
-#         "id": lot.id,
-#         "name": lot.name,
-#         "price": lot.price,
-#         "spots": [{"id": s.id, "status": s.status} for s in lot.spots]
-#     } for lot in lots])
 
 
-# --------------------------
-# View reservations
-# --------------------------
+@admin_bp.route("/summary", methods=["GET"])
+@admin_required
+def summary():
+    total_users = User.query.count()
+    # blocked_users = User.query.filter_by(is_blocked=True).count()
+
+    # Example: total active reservations
+    from backend.models import Reservation, ParkingLot
+
+    active_reservations = Reservation.query.filter(
+        Reservation.end_time == None
+    ).count()
+
+    lots = ParkingLot.query.count()
+
+    # Revenue by month
+    revenue = db.session.query(
+        func.strftime("%Y-%m", Reservation.start_time).label("month"),
+        func.sum(Reservation.parking_fee).label("total")
+    ).group_by("month").all()
+
+    revenue_data = [{"month": r[0], "amount": float(r[1] or 0)} for r in revenue]
+
+    return jsonify({
+        "total_users": total_users,
+        # "blocked_users": blocked_users,
+        "active_reservations": active_reservations,
+        "lots": lots,
+        "revenue": revenue_data
+    })
+
 @admin_bp.route("/reservations", methods=["GET"])
 @admin_required
 def list_reservations():

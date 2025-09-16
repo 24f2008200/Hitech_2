@@ -38,11 +38,11 @@ def create_app():
 
     from backend.routes.auth_routes import auth_bp
     from backend.routes.admin_routes import admin_bp
-    from backend.routes.reservation_routes import reservation_bp
+    from backend.routes.user_routes import user_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
-    app.register_blueprint(reservation_bp)
+    app.register_blueprint(user_bp)
     print("Registered blueprints")
     return app
 

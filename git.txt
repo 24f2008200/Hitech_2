@@ -1,0 +1,24 @@
+git ls-files
+
+git rm -r --cached .
+
+git add .gitignore
+git add .
+
+
+git commit -m "Remove all tracked files"
+
+git remote add origin https://github.com/24f2008200/Hitech_2.git
+git remote -v
+
+git pull origin main --allow-unrelated-histories
+
+git push origin main
+
+git push -u origin main
+
+git push -u origin master
+
+git branch   ==== to find branch name ?
+
+

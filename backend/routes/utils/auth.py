@@ -4,7 +4,8 @@ from flask import jsonify
 from flask_jwt_extended import (
     verify_jwt_in_request,
     get_jwt_identity,
-    jwt_required
+    jwt_required,
+    get_jwt
 )
 from backend.app import db
 from backend.models import User
@@ -21,16 +22,24 @@ def auth_required(fn):
 
 def current_user():
     """Return the logged-in User object based on JWT token, or None if auth is disabled."""
+    print(os.getenv("ENFORCE_AUTH"))
+
     if os.getenv("ENFORCE_AUTH", "false").lower() != "true":
+        print("Auth disabled, returning dummy user")
         # Dummy user for testing
         return User(
-            id=0,
+            id=1,
             email="dummy_admin@example.com",
             name="Dummy Admin",
             is_admin=True
         )
+    print("Fetching current user from JWT")
 
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())   # "sub" → user id (as int after conversion)
+    claims = get_jwt()
+    email = claims["email"]
+    is_admin = claims["is_admin"]
+    print(f"Current user ID from JWT: {user_id}")
     return db.session.get(User, user_id)
 
 
