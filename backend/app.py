@@ -43,7 +43,9 @@ def create_app():
     from backend.routes.auth_routes import auth_bp
     from backend.routes.admin_routes import admin_bp
     from backend.routes.user_routes import user_bp
+    from backend.diagnostics import diagnostics_bp
 
+    app.register_blueprint(diagnostics_bp, url_prefix="/admin") 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(user_bp)

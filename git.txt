@@ -101,3 +101,19 @@ git push -u origin main
 
 # 1️⃣1️⃣ Verify branches
 git branch -a
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@24f2008200
+
+# Syntax
+git push origin <local-branch>:<remote-branch>
+
+# Example
+git push origin feature1:new-feature
+feature1 → your local branch
+
+new-feature → the branch name on GitHub
+
+If new-feature doesn’t exist yet, GitHub will create it.
+
+

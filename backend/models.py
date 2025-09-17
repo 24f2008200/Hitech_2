@@ -138,18 +138,37 @@ class ParkingSpot(db.Model, SerializerMixin):
 
     @property
     def get_details(self):
+        rs = Reservation.query.filter_by(spot_id=self.id).order_by(Reservation.end_time.desc()).all()
+        sum_fee = sum(r.parking_fee for r in rs if r.parking_fee)
         r = self.current_reservation
         u = r.user if r else None
-        return {
-            "id": self.id,
-            "label": self.label,
-            "status": self.status,
-            "vehicle_number": r.vehicle_number if r else None,
-            "occupied_since": r.start_time if r else None,
-            "user_name": u.name if u else None,
-            "driver_contact": r.driver_contact if r else None,
-            "driver_name": r.driver_name if r else None,
-            "end_time": r.end_time if r else None
+        if self.status == "O":
+            return {
+                "id": self.id,
+                "label": self.label,
+                "status": self.status,
+                "vehicle_number": r.vehicle_number if r else None,
+                "occupied_since": r.start_time if r else None,
+                "user_name": u.name if u else None,
+                "driver_contact": r.driver_contact if r else None,
+                "driver_name": r.driver_name if r else None,
+                "end_time": r.end_time if r else None,
+                "total_earnings": sum_fee if sum_fee > 0 else None
+            } 
+        else:
+
+            r = rs[0] if rs else None
+            return {
+                "id": self.id,
+                "label": self.label,
+                "status": self.status,
+                "vehicle_number": r.vehicle_number if r else None,
+                "occupied_since": r.start_time if r else None,
+                "user_name": r.user.name if r and r.user else None,
+                "driver_contact": r.driver_contact if r else None,
+                "driver_name": r.driver_name if r else None,
+                "end_time": r.end_time if r else None,
+                "total_earnings": sum_fee if sum_fee > 0 else None
         }
 
 class Reservation(db.Model, SerializerMixin):

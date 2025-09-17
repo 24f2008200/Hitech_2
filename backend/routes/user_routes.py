@@ -102,13 +102,17 @@ def reservations():
 
     result = []
     for r in reservations:
+        lot = r.spot.lot if r.spot else {}
+
         result.append({
             "id": r.id,
-            "lot_id": r.spot.label,
-            "spot_id": r.spot_id,
+            "spot_id": r.spot.label,
+            "lot_prefix": lot.prefix if lot else None,
             "vehicle_number": r.vehicle_number,
             "start_time": r.start_time,
             "end_time": r.end_time,
+            "driver_name": r.driver_name,
+            "driver_contact": r.driver_contact,
             "status": "active" if not r.end_time else "completed",
             "cost": r.parking_fee
         })
