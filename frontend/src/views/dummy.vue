@@ -1,86 +1,27 @@
-<template>
-  <div class="container mt-5" style="max-width: 500px;">
-    <h2 class="mb-4">User Registration</h2>
-
-    <form @submit.prevent="handleRegister">
-      <div class="mb-3">
-        <label class="form-label">Name</label>
-        <input v-model="form.name" type="text" class="form-control" required />
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Email</label>
-        <input v-model="form.email" type="email" class="form-control" required />
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Telephone</label>
-        <input v-model="form.telephone" type="text" class="form-control" />
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Address</label>
-        <input v-model="form.address" type="text" class="form-control" />
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Password</label>
-        <input v-model="form.password" type="password" class="form-control" required />
-      </div>
-
-      <button type="submit" class="btn btn-primary w-100">Register</button>
-    </form>
-
-    <!-- Success / Error messages -->
-    <div v-if="message" class="alert mt-3"
-         :class="{'alert-success': success, 'alert-danger': !success}">
-      {{ message }}
-    </div>
+<!-- Recent Parking History -->
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    Recent Parking History
   </div>
-</template>
-
-<script>
-import { apiFetch } from "@/api";
-export default {
-  name: "Register",
-  data() {
-    return {
-      form: {
-        name: "",
-        email: "",
-        telephone: "",
-        address: "",
-        password: ""
-      },
-      message: "",
-      success: false
-    }
-  },
-  methods: {
-    async handleRegister() {
-      try {
-        const response = await apiFetch("/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(this.form)
-        })
-
-        const data = await response.json()
-
-        if (response.ok) {
-          this.success = true
-          this.message = data.message || "Registration successful!"
-          this.form = { name: "", email: "", telephone: "", address: "", password: "" }
-        } else {
-          this.success = false
-          this.message = data.error || "Registration failed"
-        }
-      } catch (err) {
-        console.error("Error during registration:", err)
-        this.success = false
-        this.message = "Server error. Please try again."
-      }
-    }
-  }
-}
-</script>
+  <div class="card-body">
+    <DataTable :columns="reservationColumns" :rows="reservations">
+      <!-- Custom cell for From -->
+      <template #start_time="{ row }">
+        {{ f(row.start_time) }}
+      </template>
+      <!-- Custom cell for To -->
+      <template #end_time="{ row }">
+        {{ f(row.end_time) }}
+      </template>
+      <!-- Custom cell for Action -->
+      <template #status="{ row }">
+        <button v-if="row.status === 'active'"
+                class="btn btn-sm btn-danger"
+                @click="releaseSpot(row.id)">
+          Release
+        </button>
+        <span v-else class="badge bg-success">Parked Out</span>
+      </template>
+    </DataTable>
+  </div>
+</div>

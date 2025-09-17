@@ -8,23 +8,38 @@
         Recent Parking History
       </div>
       <div class="card-body">
-        <DataTable :columns="reservationColumns" :rows="reservations">
-          <!-- Custom cell for From -->
-          <template #start_time="{ row }">
-            {{ f_date(row.start_time) }}
-          </template>
-          <!-- Custom cell for To -->
-          <template #end_time="{ row }">
-            {{ f_date(row.end_time) }}
-          </template>
-          <!-- Custom cell for Action -->
-          <template #status="{ row }">
-            <button v-if="row.status === 'active'" class="btn btn-sm btn-danger" @click="releaseSpot(row.id)">
-              Release
-            </button>
-            <span v-else class="badge bg-success">Parked Out</span>
-          </template>
-        </DataTable>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Location</th>
+              <th>Vehicle No</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Driver Name</th>
+              <th>Driver Contact</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="r in reservations" :key="r.id">
+              <td>{{ r.id }}</td>
+              <td>{{ r.lot_id }}</td>
+              <td>{{ r.vehicle_number }}</td>
+              <td>{{ f(r.start_time) }}</td>
+              <td>{{ f(r.end_time) }}</td>
+              <td>{{ r.driver_name }}</td>
+              <td>{{ r.driver_contact }}</td>
+              <!-- <td>{{ r.status}}</td> -->
+              <td>
+                <button v-if="r.status === 'active'" class="btn btn-sm btn-danger" @click="releaseSpot(r.id)">
+                  Release
+                </button>
+                <span v-else class="badge bg-success">Parked Out</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -114,28 +129,16 @@ import { ref, onMounted } from "vue";
 import { useAuth } from "../stores/auth";
 import * as bootstrap from "bootstrap";
 import { apiFetch } from "@/api";
-import DataTable from "@/components/DataTable.vue";
 
 const { token } = useAuth();
-const reservationColumns = [
-  { key: "lot_prefix", label: "ID" },
-  { key: "spot_id", label: "Location" },
-  { key: "vehicle_number", label: "Vehicle No" },
-  { key: "start_time", label: "From" },
-  { key: "end_time", label: "To" },
-  { key: "driver_name", label: "Driver Name" },
-  { key: "driver_contact", label: "Driver Contact" },
-  { key: "status", label: "Action" }
-];
-
 
 // State
 const reservations = ref([]);
 const pinCodes = ref([]);
 const selectedPin = ref("");
 const lots = ref([]);
-const currentUser = JSON.parse(localStorage.getItem("current_user", '{"name": "User"}'));
-const f_date = (raw) => raw ? new Date(raw).toLocaleString() : '';
+const currentUser = JSON.parse(localStorage.getItem("current_user" , '{"name": "User"}'));
+const f = (raw) => new Date(raw).toLocaleString();
 // state for modal + form
 const selectedLot = ref(null);
 const bookingModal = ref(null);
@@ -157,8 +160,8 @@ function openBookingModal(lot) {
 // Confirm booking
 async function confirmBooking() {
   if (!selectedLot.value) return;
-  form.value.user_name = currentUser.name;
-  form.value.user_id = currentUser.id;
+  form.value.user_name = current_user.name;
+  form.value.user_id = current_user.id;
   const res = await apiFetch("/user/book", {
     method: "POST",
     headers: {
