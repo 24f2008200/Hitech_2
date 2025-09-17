@@ -59,6 +59,7 @@
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuth } from "../stores/auth";
+import { apiFetch } from "@/api";
 const { isLoggedIn, isAdmin, logout } = useAuth();
 
 
@@ -80,7 +81,7 @@ console.log("Navbar - isAdmin:", isAdmin.value);
 
 async function doLogout() {
   try {
-    await fetch("http://localhost:5000/auth/logout", {
+    await apiFetch("/auth/logout", {
       method: "POST",
       credentials: "include",
     });

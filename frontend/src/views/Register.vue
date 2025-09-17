@@ -40,6 +40,7 @@
 </template>
 
 <script>
+import { apiFetch } from "@/api";
 export default {
   name: "Register",
   data() {
@@ -58,7 +59,7 @@ export default {
   methods: {
     async handleRegister() {
       try {
-        const response = await fetch("http://localhost:5000/user/register", {
+        const response = await apiFetch("/user/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(this.form)

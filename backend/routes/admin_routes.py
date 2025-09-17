@@ -60,28 +60,26 @@ def list_lots():
 @admin_required
 def list_users():
     users = User.query.all()
-    return jsonify([{"id": u.id, "email": u.email, "name": u.name} for u in users])
+    return jsonify([{"id": u.id, "email": u.email,
+                     "name": u.name, "mobile": u.mobile,
+                     "address": u.address, "is_blocked": u.is_admin < 0  } for u in users])
 
 
 @admin_bp.route("/search", methods=["GET"])
 @admin_required
 def search_users():
-    current_user = admin_required()
-    if isinstance(current_user, tuple):
-        return current_user
-
     query = request.args.get("query", "").strip()
     if not query:
         return jsonify([])
 
     results = User.query.filter(
         (User.email.ilike(f"%{query}%")) |
-        (User.phone.ilike(f"%{query}%")) |
+        (User.mobile.ilike(f"%{query}%")) |
         (User.name.ilike(f"%{query}%"))
     ).all()
 
     return jsonify([
-        {"id": u.id, "email": u.email, "phone": u.phone, "name": u.name}
+        {"id": u.id, "email": u.email, "mobile": u.mobile, "name": u.name}
         for u in results
     ])
 

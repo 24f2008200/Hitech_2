@@ -20,6 +20,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuth } from "../stores/auth";
+import { apiFetch } from "@/api";
 const { login } = useAuth();
 
 const email = ref("");
@@ -29,7 +30,7 @@ const router = useRouter();
 
 async function doLogin() {
   try {
-    const res = await fetch("http://localhost:5000/auth/login", {
+    const res = await apiFetch("/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include", // send cookies/session if backend sets them

@@ -66,6 +66,7 @@
 </template>
 
 <script>
+import { apiFetch } from "@/api";
 export default {
   data() {
     return {
@@ -80,7 +81,7 @@ export default {
   methods: {
     async fetchLots() {
       const token = localStorage.getItem("access_token")
-      const res = await fetch("http://localhost:5000/admin/lots", {
+      const res = await apiFetch("/admin/lots", {
         headers: { Authorization: `Bearer ${token}` }
       })
       this.lots = await res.json()
@@ -94,11 +95,11 @@ export default {
     async saveLot() {
       const token = localStorage.getItem("access_token")
       const url = this.editingLot
-        ? `http://localhost:5000/admin/lots/${this.editingLot}`
-        : "http://localhost:5000/admin/lots"
+        ? `/admin/lots/${this.editingLot}`
+        : "/admin/lots"
       const method = this.editingLot ? "PUT" : "POST"
 
-      await fetch(url, {
+      await apiFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -119,7 +120,7 @@ export default {
       if (!confirm("Are you sure you want to delete this lot?")) return
 
       const token = localStorage.getItem("access_token")
-      await fetch(`http://localhost:5000/admin/lots/${lotId}`, {
+      await apiFetch(`/admin/lots/${lotId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       })

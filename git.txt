@@ -22,3 +22,82 @@ git push -u origin master
 git branch   ==== to find branch name ?
 
 
+
+See commit history
+git log --oneline
+
+This will show you all the commits with their short commit IDs (hashes). Example:
+
+a1b2c3d Updated ParkingLot model
+d4e5f6a Fixed modal bug
+7f8g9h1 Initial commit
+
+
+See changes in a specific commit
+git show <commit-id>
+
+Example:
+
+git show a1b2c3d
+
+
+Compare file with an old version
+
+To see what changed in a specific file compared to an older commit:
+
+git diff <old-commit-id> -- path/to/file.py
+
+
+Example:
+
+git diff d4e5f6a models.py
+
+
+See old content of a file
+git show <commit-id>:path/to/file.py
+
+
+Example:
+
+git show a1b2c3d:backend/models.py
+
+
+This will print the version of models.py at that commit.
+
+###########################################################
+
+# 1️⃣ Backup your current repo
+cd /i/IIT/Term5
+cp -r vehicle_parking vehicle_parking_backup
+
+# 2️⃣ Remove any problematic desktop.ini from .git
+cd vehicle_parking/.git
+find . -name "desktop.ini" -type f -delete
+
+# 3️⃣ Clean reflogs and garbage
+git reflog expire --expire=now --all
+git gc --prune=now --aggressive
+
+# 4️⃣ Check repo integrity
+git fsck
+
+# 5️⃣ Go back to project root
+cd ..
+
+# 6️⃣ Rename local branch to 'main'
+git branch -m master main
+
+# 7️⃣ Add remote if not already present
+git remote add origin https://github.com/<your-username>/<repo>.git
+
+# 8️⃣ Force push local main to remote (overwrite remote if needed)
+git push origin main --force
+
+# 9️⃣ Optional: Delete old remote master branch
+git push origin --delete master
+
+# 🔟 Set upstream tracking for future pushes/pulls
+git push -u origin main
+
+# 1️⃣1️⃣ Verify branches
+git branch -a

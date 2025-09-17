@@ -16,12 +16,13 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { apiFetch } from "@/api";
 
 const router = useRouter();
 const isLoggedIn = ref(true); // ⚡ later: make this dynamic
 
 async function logout() {
-  await fetch("http://localhost:5000/auth/logout", {
+  await apiFetch("/auth/logout", {
     method: "POST",
     credentials: "include",
   });

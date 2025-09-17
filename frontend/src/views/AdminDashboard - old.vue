@@ -64,6 +64,7 @@
 
 <script>
 import ParkingLotCard from "../components/ParkingLotCard.vue"
+import { apiFetch } from "@/api";
 
 export default {
   components: { ParkingLotCard },
@@ -80,7 +81,7 @@ export default {
     async fetchLots() {
       const token = localStorage.getItem("access_token")
       try {
-        const res = await fetch("http://localhost:5000/admin/lots", {
+        const res = await apiFetch("/admin/lots", {
           headers: { "Authorization": `Bearer ${token}` }
         })
         this.lots = await res.json()
@@ -91,7 +92,7 @@ export default {
     async addLot() {
       const token = localStorage.getItem("access_token")
       try {
-        const res = await fetch("http://localhost:5000/admin/lots", {
+        const res = await apiFetch("/admin/lots", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

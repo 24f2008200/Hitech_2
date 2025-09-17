@@ -71,7 +71,7 @@ import ParkingLotCard from "../components/ParkingLotCard.vue"
 import SlotDetailModal from '../components/SlotDetailModal.vue'
 import { Modal } from "bootstrap"
 import { ref } from 'vue'
-
+import { apiFetch } from "@/api";
 
 const lots = ref([]) // fetched from API
 
@@ -105,7 +105,7 @@ export default {
     async fetchLots() {
       const token = localStorage.getItem("access_token")
       try {
-        const res = await fetch("http://localhost:5000/admin/lots", {
+        const res = await apiFetch("/admin/lots", {
           headers: { "Authorization": `Bearer ${token}` }
         })
         this.lots = await res.json()
@@ -150,27 +150,27 @@ export default {
       const token = localStorage.getItem("access_token")
       let url, method
       if (this.isEdit) {
-        this.handleUpdates(`http://localhost:5000/admin/lots/${this.editId}`, "PUT", this.formLot)
+        this.handleUpdates(`/admin/lots/${this.editId}`, "PUT", this.formLot)
       } else {
-        this.handleUpdates("http://localhost:5000/admin/lots", "POST", this.formLot)
+        this.handleUpdates("/admin/lots", "POST", this.formLot)
       }
       this.closeModalAndRefresh()
     },
     async handleDeleteLot(id) {
       const token = localStorage.getItem("access_token")
       if (!confirm("Are you sure you want to delete this lot?")) return
-      this.handleUpdates(`http://localhost:5000/admin/lots/${id}`, "DELETE", null)
+      this.handleUpdates(`/admin/lots/${id}`, "DELETE", null)
     },
     async handleDeleteSlot(slot) {
       const token = localStorage.getItem("access_token")
       if (!confirm("Are you sure you want to delete this slot?")) return
       this.isModalOpen = false
-      this.handleUpdates(`http://localhost:5000/admin/slots/${slot.id}`, "DELETE", null)
+      this.handleUpdates(`/admin/slots/${slot.id}`, "DELETE", null)
     },
     async handleUpdates(url, method, data) {
       const token = localStorage.getItem("access_token")
       try {
-        const res = await fetch(url, {
+        const res = await apiFetch(url, {
           method: method,
           headers: {
             "Content-Type": "application/json",

@@ -123,6 +123,7 @@
 import { ref, onMounted } from "vue";
 import { useAuth } from "../stores/auth";
 import * as bootstrap from "bootstrap";
+import { apiFetch } from "@/api";
 
 const { token } = useAuth();
 
@@ -156,7 +157,7 @@ async function confirmBooking() {
   const current_user = JSON.parse(localStorage.getItem("current_user"));
   form.value.user_name = current_user.name;
   form.value.user_id = current_user.id;
-  const res = await fetch("http://localhost:5000/user/book", {
+  const res = await apiFetch("/user/book", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -183,7 +184,7 @@ async function confirmBooking() {
 }
 // Fetch recent reservations
 async function fetchReservations() {
-  const res = await fetch("http://localhost:5000/user/reservations", {
+  const res = await apiFetch("/user/reservations", {
     headers: { Authorization: `Bearer ${token.value}` },
   });
   if (res.ok) {
@@ -193,13 +194,10 @@ async function fetchReservations() {
 
 // Release a spot
 async function releaseSpot(reservationId) {
-  const res = await fetch(
-    `http://localhost:5000/user/release/${reservationId}`,
-    {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token.value}` },
-    }
-  );
+  const res = await apiFetch(`/user/release/${reservationId}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token.value}` },
+  });
   if (res.ok) {
     reservations.value = reservations.value.map((r) =>
       r.id === reservationId ? { ...r, status: 'completed' } : r
@@ -210,7 +208,7 @@ async function releaseSpot(reservationId) {
 
 // Fetch pin codes
 async function fetchPinCodes() {
-  const res = await fetch("http://localhost:5000/user/pincodes", {
+  const res = await apiFetch("/user/pincodes", {
     headers: { Authorization: `Bearer ${token.value}` },
   });
   if (res.ok) {
@@ -221,12 +219,9 @@ async function fetchPinCodes() {
 // Fetch lots by pin code
 async function fetchLots() {
   if (!selectedPin.value) return;
-  const res = await fetch(
-    `http://localhost:5000/user/lots?pin_code=${selectedPin.value}`,
-    {
-      headers: { Authorization: `Bearer ${token.value}` },
-    }
-  );
+  const res = await apiFetch(`/user/lots?pin_code=${selectedPin.value}`, {
+    headers: { Authorization: `Bearer ${token.value}` },
+  });
   if (res.ok) {
     lots.value = await res.json();
   }

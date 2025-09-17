@@ -61,6 +61,8 @@
 </template>
 
 <script>
+import { apiFetch } from '../api'
+
 
 export default {
   name: "SearchAdmin",
@@ -87,9 +89,9 @@ export default {
             ? "/admin/search/users"
             : "/admin/search/bookings"
 
-        const url = `http://localhost:5000${endpoint}?search_by=${this.searchBy}&value=${encodeURIComponent(this.searchValue)}`
+        const url = `${endpoint}?search_by=${this.searchBy}&value=${encodeURIComponent(this.searchValue)}`
 
-        const response = await fetch(url, {
+        const response = await apiFetch(url, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

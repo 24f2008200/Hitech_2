@@ -6,17 +6,20 @@
       <thead>
         <tr>
           <th>ID</th>
+          <th>Name</th>
           <th>Email</th>
-          <th>Phone</th>
-          <th>Status</th>
+          <th>Mobile</th>
+          <th>Address</th>
           <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="u in users" :key="u.id">
           <td>{{ u.id }}</td>
+          <td>{{ u.name }}</td>
           <td>{{ u.email }}</td>
-          <td>{{ u.phone }}</td>
+          <td>{{ u.mobile }}</td>
+          <td>{{ u.address }}</td>
           <td>
             <span :class="u.blocked ? 'text-danger' : 'text-success'">
               {{ u.blocked ? 'Blocked' : 'Active' }}
@@ -37,12 +40,13 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useAuth } from "../stores/auth";
+import { apiFetch } from "@/api";
 
 const { token } = useAuth();
 const users = ref([]);
 
 async function fetchUsers() {
-  const res = await fetch("http://localhost:5000/admin/users", {
+  const res = await apiFetch("/admin/users", {
     headers: { Authorization: `Bearer ${token.value}` }
   });
   if (res.ok) {
@@ -55,7 +59,7 @@ function editUser(user) {
 }
 
 async function toggleBlock(user) {
-  const res = await fetch(`http://localhost:5000/admin/users/${user.id}/block`, {
+  const res = await apiFetch(`/admin/users/${user.id}/block`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${token.value}` }
   });

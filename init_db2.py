@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 from backend.app import create_app, db
 from backend.models import User
+from reservations_data import reservations_data
 
 app = create_app()
 
@@ -119,66 +120,30 @@ with app.app_context():
         
     #     db.session.commit()
 # Create reservations
-    res1 = Reservation(
-        user_id=user1.id,
-        spot_id=lot1.spots[0].id,
-        vehicle_number="TN01AB1234",
-        start_time=datetime.utcnow() - timedelta(hours=1),
-        end_time=None,  
-        driver_contact="9876543210",
-        driver_name="Ram",
-    )
-    lot1.spots[0].status = "O"
-    res2 = Reservation(
-        user_id=user2.id,
-        spot_id=lot1.spots[1].id,
-        vehicle_number="TN01XY9999",
-        start_time=datetime.utcnow() - timedelta(hours=3),
-        end_time=datetime.utcnow() - timedelta(hours=1), 
-        driver_contact="8765432109",
-        driver_name="Murugan"
-    )
-    res3= Reservation(
-        user_id=user3.id,
-        spot_id=lot2.spots[0].id,
-        vehicle_number="TN01ZZ8888",
-        start_time=datetime.utcnow() - timedelta(hours=2),
-        end_time= None ,
-        driver_contact="9876543210",
-        driver_name="Ram"
-    )
-    lot2.spots[0].status = "O"
-    res4 = Reservation(
-        user_id=user4.id,
-        spot_id=lot3.spots[0].id,
-        vehicle_number="TN01CC7777",
-        start_time=datetime.utcnow() - timedelta(hours=4),
-        end_time=datetime.utcnow() - timedelta(hours=2) , 
-        driver_contact="765242325",
-        driver_name="Kumar"
-    )
-    res5 = Reservation(
-        user_id=user5.id,
-        spot_id=lot4.spots[0].id,
-        vehicle_number="TN01DD6666",
-        start_time=datetime.utcnow() - timedelta(hours=1, minutes=30),
-        end_time=None , 
-        driver_contact="765242325",
-        driver_name="Kumar"
-    )
-    lot4.spots[0].status = "O"
-    res6 = Reservation(
-        user_id=user1.id,
-        spot_id=lot4.spots[1].id,
-        vehicle_number="TN01EE5555",
-        start_time=datetime.utcnow() - timedelta(hours=5),
-        end_time=None,
-        driver_contact="1254698725",
-        driver_name="Ramu"
-    )
-    # Mark spot 0 occupied   
-    lot4.spots[1].status = "O"
+#   {
+#     "user_no": 2,
+#     "spot_no": 69,
+#     "car_reg_no": "UP58GL6636",
+#     "telephone": "9738265833",
+#     "name": "Anil Reddy",
+#     "start_time": "2025-09-15 09:00:00",
+#     "end_time": "2025-09-16 09:00:00"
+#   },
 
-    db.session.add_all([res1, res2, res3, res4, res5, res6])
+    for r in reservations_data:
+        spot = ParkingSpot.query.offset(r["spot_no"] - 1).first()
+        reservation = Reservation(
+            user_id=r["user_no"],
+            spot_id=r["spot_no"] if spot else None,
+            vehicle_number=r["car_reg_no"],
+            start_time=datetime.strptime(r["start_time"], "%Y-%m-%d %H:%M:%S"),
+            end_time= datetime.strptime(r["end_time"], "%Y-%m-%d %H:%M:%S") if r["end_time"] else None,
+            driver_contact=f"{r['telephone']}",
+            driver_name= r["name"],
+        )
+        if reservation.end_time is None:
+            spot.status = "O"
+        db.session.add(reservation)
+
     db.session.commit()
     print("✅ Database initialized with dummy data!")

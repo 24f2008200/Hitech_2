@@ -1,6 +1,7 @@
 import { ref } from "vue";
 import { useAuth } from "../stores/auth";
 import * as bootstrap from "bootstrap";
+import { apiFetch } from "../api";
 
 const { token } = useAuth();
 
@@ -27,7 +28,7 @@ function openBookingModal(lot) {
 async function confirmBooking() {
   if (!selectedLot.value) return;
 
-  const res = await fetch("http://localhost:5000/user/reservations", {
+  const res = await apiFetch("/user/reservations", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

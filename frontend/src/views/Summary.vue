@@ -26,12 +26,13 @@
 import { ref, onMounted } from "vue";
 import { useAuth } from "../stores/auth";
 import LineChart from "../components/LineChart.vue";
+import { apiFetch } from "@/api";
 
 const { token } = useAuth();
 const summary = ref({});
 
 async function fetchSummary() {
-  const res = await fetch("http://localhost:5000/admin/summary", {
+  const res = await apiFetch("/admin/summary", {
     headers: { Authorization: `Bearer ${token.value}` }
   });
   if (res.ok) {
