@@ -15,4 +15,11 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  server: {
+    allowedHosts: [
+      "93b49823e7c0.ngrok-free.app" // 👈 your ngrok hostname
+    ],
+    host: true, // important so it listens on all addresses
+    port: 5173
+  }
 })

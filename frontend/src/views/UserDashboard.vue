@@ -118,7 +118,7 @@ import DataTable from "@/components/DataTable.vue";
 
 const { token } = useAuth();
 const reservationColumns = [
-  { key: "lot_prefix", label: "ID" },
+  { key: "lot_prefix", label: "ID" ,filterType :"select"},
   { key: "spot_id", label: "Location" },
   { key: "vehicle_number", label: "Vehicle No" },
   { key: "start_time", label: "From" },

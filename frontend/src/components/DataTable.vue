@@ -5,17 +5,24 @@
         <tr>
           <th v-for="col in columns" :key="col.key" class="px-2 py-2">
             {{ col.label }}
-            <div v-if="enableFilters" class="mt-1">
-              <select v-model="filters[col.key]" class="form-select form-select-sm w-auto mx-auto">
-                <option value="">All</option>
-                <option
-                  v-for="opt in uniqueValues(col.key)"
-                  :key="opt"
-                  :value="opt"
-                >
-                  {{ opt }}
-                </option>
-              </select>
+            <div v-if="enableFilters" class="filters">
+              <!-- <div v-for="col in columns" :key="col.key" class="mb-2"> -->
+                <!-- <label class="me-2">{{ col.label || col.key }}</label> -->
+
+                <!-- Dropdown filter -->
+                <select v-if="col.filterType === 'select'" v-model="filters[col.key]"
+                  class="form-select form-select-sm w-auto d-inline-block">
+                  <option value="">All</option>
+                  <option v-for="v in uniqueValues(col.key)" :key="v" :value="v">
+                    {{ v }}
+                  </option>
+                </select>
+
+                <!-- Input filter -->
+                <input v-else v-model="filters[col.key]" type="text"
+                  class="form-control form-control-sm w-auto d-inline-block"
+                  :placeholder="`Filter by ${col.label || col.key}`" />
+              <!-- </div> -->
             </div>
           </th>
         </tr>
@@ -31,32 +38,55 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "DataTable",
-  props: {
-    columns: { type: Array, required: true },
-    rows: { type: Array, required: true },
-    enableFilters: { type: Boolean, default: true }
-  },
-  data() {
-    return {
-      filters: {}
-    }
-  },
-  computed: {
-    filteredRows() {
-      return this.rows.filter(row =>
-        Object.keys(this.filters).every(key =>
-          !this.filters[key] || row[key] == this.filters[key]
-        )
-      );
-    }
-  },
-  methods: {
-    uniqueValues(key) {
-      return [...new Set(this.rows.map(r => r[key]))].filter(v => v);
-    }
-  }
+<script setup>
+import { ref, computed } from 'vue'
+
+// Use props safely by assigning const props = defineProps(...)
+const props = defineProps({
+  columns: { type: Array, required: true },
+  rows: { type: Array, required: true },
+  enableFilters: { type: Boolean, default: true }
+})
+
+// reactive filters
+const filters = ref({})
+
+// computed filteredRows uses props.rows and filters.value
+// const filteredRows = computed(() => {
+//   // if rows is undefined, return empty array safely
+//   const rows = props.rows || []
+//   return rows.filter(row =>
+//     Object.keys(filters.value).every(key =>
+//       !filters.value[key] || row[key] === filters.value[key]
+//     )
+//   )
+// })
+
+const filteredRows = computed(() => {
+  return props.rows.filter(row =>
+    Object.keys(filters.value).every(key => {
+      const filter = filters.value[key]
+      if (!filter) return true
+
+      const col = props.columns.find(c => c.key === key)
+      const value = String(row[key] || "").toLowerCase()
+
+      if (col?.filterType === "select") {
+        // exact match for dropdown
+        return value === filter.toLowerCase()
+      } else {
+        // substring match for free typing
+        return value.toLowerCase().includes(filter.toLowerCase())
+        
+      }
+    })
+  )
+})
+
+
+// helper to get unique, non-empty values for a column
+function uniqueValues(key) {
+  const rows = props.rows || []
+  return [...new Set(rows.map(r => r[key]).filter(v => v !== null && v !== undefined && v !== ""))]
 }
 </script>

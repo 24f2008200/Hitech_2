@@ -4,16 +4,10 @@ from backend.app import db
 from backend.models import ParkingLot, ParkingSpot, Reservation, User
 from backend.routes.utils.auth import auth_required , admin_required
 from reportlab.pdfgen import canvas
-from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.utils import ImageReader
-from reportlab.platypus import Table, TableStyle
 from io import BytesIO
 import base64
-
-
-
-
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -303,86 +297,29 @@ def generate_pdf():
     p = canvas.Canvas(buffer, pagesize=A4)
     width, height = A4
 
-    # ----------------------------
-    # Page 1: Title + Tables
-    # ----------------------------
     p.setFont("Helvetica-Bold", 16)
     p.drawString(50, height - 50, "Parking Lot Monthly Report")
 
-    # Occupancy summary table
-    lots = ParkingLot.query.all()
-    occupancy_data = [["Lot", "Available Spots", "Occupied Spots"]]
-    for lot in lots:
-        occupied = lot.occupied_spots
-        available = lot.number_of_spots - occupied
-        occupancy_data.append([lot.name, available, occupied])
-
-    table = Table(occupancy_data, colWidths=[150, 150, 150])
-    table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
-    ]))
-    table.wrapOn(p, width, height)
-    table.drawOn(p, 50, height - 200)
-
-    # Revenue summary table
-    results = (
-        db.session.query(
-            ParkingLot.name,
-            func.sum(Reservation.parking_fee).label("total_revenue")
-        )
-        .join(Reservation.spot)          # join Spot from Reservation
-        .join(ParkingLot) 
-        .group_by(ParkingLot.name)
-        .all()
-    )
-
-    revenue_data = [["Lot", "Total Revenue"]]
-    for lot, rev in results:
-        revenue_data.append([lot, float(rev or 0)])
-
-    table2 = Table(revenue_data, colWidths=[200, 200])
-    table2.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
-    ]))
-    table2.wrapOn(p, width, height)
-    table2.drawOn(p, 50, height - 400)
-
-    # Finish Page 1
-    p.showPage()
-
-    # ----------------------------
-    # Page 2+: Charts
-    # ----------------------------
     y = height - 100
     for chart in charts:
         try:
-            img_data = chart["data"].split(",")[1]
+            img_data = chart["data"].split(",")[1]  # strip "data:image/png;base64,"
             img_bytes = base64.b64decode(img_data)
             img_buf = BytesIO(img_bytes)
+
             img_reader = ImageReader(img_buf)
 
-            p.drawImage(img_reader, 50, y - 250, width=500, height=250,
-                        preserveAspectRatio=True, mask="auto")
-            y -= 300
-            if y < 200:
+            p.drawImage(img_reader, 50, y - 200, width=500, height=200, preserveAspectRatio=True, mask="auto")
+
+            # p.drawImage(img_buf, 50, y - 200, width=500, height=200, preserveAspectRatio=True, mask="auto")
+            y -= 250
+            if y < 100:  # start new page
                 p.showPage()
                 y = height - 100
         except Exception as e:
             print("Error embedding chart:", e)
 
-    # Save PDF
     p.save()
     buffer.seek(0)
-    return send_file(buffer, as_attachment=True,
-                     download_name="Parking_Report.pdf",
-                     mimetype="application/pdf")
+    print("Report being sent")
+    return send_file(buffer, as_attachment=True, download_name="Parking_Report.pdf", mimetype="application/pdf")

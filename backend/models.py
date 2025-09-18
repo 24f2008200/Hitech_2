@@ -61,6 +61,9 @@ class ParkingLot(db.Model, SerializerMixin):
             ]
 
     @hybrid_property
+    def occupied_spots(self):
+        return len([s for s in self.spots if s.status == "O"])
+    @hybrid_property
     def number_of_spots(self):
         return len(self.spots)
     

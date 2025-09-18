@@ -2,38 +2,23 @@
   <div class="container mt-4">
     <h2>Registered Users</h2>
 
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Mobile</th>
-          <th>Address</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="u in users" :key="u.id">
-          <td>{{ u.id }}</td>
-          <td>{{ u.name }}</td>
-          <td>{{ u.email }}</td>
-          <td>{{ u.mobile }}</td>
-          <td>{{ u.address }}</td>
-          <td>
-            <span :class="u.blocked ? 'text-danger' : 'text-success'">
-              {{ u.blocked ? 'Blocked' : 'Active' }}
-            </span>
-          </td>
-          <td>
-            <button class="btn btn-sm btn-warning me-2" @click="editUser(u)">Edit</button>
-            <button class="btn btn-sm btn-danger" @click="toggleBlock(u)">
-              {{ u.blocked ? 'Unblock' : 'Block' }}
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <DataTable :columns="userCols" :rows="users">
+      <!-- Custom cell for From -->
+      <template #start_time="{ row }">
+        {{ f_date(row.start_time) }}
+      </template>
+      <!-- Custom cell for To -->
+      <template #end_time="{ row }">
+        {{ f_date(row.end_time) }}
+      </template>
+      <!-- Custom cell for Action -->
+      <template #status="{ row }">
+        <button v-if="row.status === 'active'" class="btn btn-sm btn-danger" @click="releaseSpot(row.id)">
+          Release
+        </button>
+        <span v-else class="badge bg-success">Parked Out</span>
+      </template>
+    </DataTable>
   </div>
 </template>
 
@@ -41,9 +26,18 @@
 import { ref, onMounted } from "vue";
 import { useAuth } from "../stores/auth";
 import { apiFetch } from "@/api";
+import DataTable from "@/components/DataTable.vue";
 
 const { token } = useAuth();
 const users = ref([]);
+const userCols = [
+  { key: "id", label: "ID" },
+  { key: "name", label: "Name" },
+  { key: "email", label: "E-Mail" },
+  { key: "mobile", label: "Mobile" },
+  { key: "address", label: "Address" },
+  { key: "status", label: "Action" }
+];
 
 async function fetchUsers() {
   const res = await apiFetch("/admin/users", {

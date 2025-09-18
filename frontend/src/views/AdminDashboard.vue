@@ -80,6 +80,7 @@ const selectedSlot = ref({})
 const selectedLot = ref({})
 
 
+
 export default {
   name: 'AdminDashboard',
   components: { ParkingLotCard, SlotDetailModal },
@@ -91,6 +92,7 @@ export default {
       editId: null,
       isModalOpen: false,
       selectedSlot: {},
+      selectedLot: null,
       selectedReservation: null
     }
 
