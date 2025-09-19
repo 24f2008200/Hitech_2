@@ -43,7 +43,7 @@ def book_spot():
         user_id=user.id,
         spot_id=spot.id,
         vehicle_number=vehicle_number,
-        start_time=datetime.utcnow(),
+        start_time=datetime.now(UTC),
         driver_name=driver_name,
         driver_contact=driver_contact
     )
@@ -74,7 +74,7 @@ def release_spot(res_id):
     if reservation.end_time:
         return jsonify({"error": "Spot already released"}), 400
 
-    reservation.end_time = datetime.utcnow()
+    reservation.end_time = datetime.now(UTC)
     reservation.spot.status = "A"
 
     # Calculate cost (duration * lot price)

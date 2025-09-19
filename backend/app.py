@@ -1,9 +1,11 @@
-import os
+import os ,sys
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
-from backend.extensions import db, bcrypt, jwt
+
+import redis
+from backend.extensions import db, bcrypt, jwt ,cache
 from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -16,7 +18,7 @@ os.makedirs(INSTANCE_DIR, exist_ok=True)
 
 
 
-def create_app():
+def create_app(use_redis = False, large_data = False):
     load_dotenv()
     app = Flask(__name__, instance_relative_config=True)
 
@@ -24,21 +26,62 @@ def create_app():
      resources={r"/*": {"origins": "http://localhost:5173"}},
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"])
+    data_base = 'vehicle_parking_large.db' if large_data else 'vehicle_parking.db'
+    print("Starting with data base:  " +data_base)
 
 
     # Config
     app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "devsecret")
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY", "super-secret-key")
-    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(INSTANCE_DIR, 'vehicle_parking.db')}"
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(INSTANCE_DIR, data_base)}"
     app.config["CORS_AUTOMATIC_OPTIONS"] = True
+
+    if use_redis:
+        try:
+            app.config.update({
+                "CACHE_TYPE": "RedisCache",
+                "CACHE_REDIS_HOST": "localhost",
+                "CACHE_REDIS_PORT": 6379,
+                "CACHE_REDIS_DB": 1,
+                "CACHE_DEFAULT_TIMEOUT": 60,
+            })
+            cache.init_app(app)
+            print("Redis mode enabled")
+
+            # Test Redis connection
+            with app.app_context():
+                cache.set("healthcheck", "ok", timeout=5)
+                if cache.get("healthcheck") == "ok":
+                    print("Redis cache is working")
+                else:
+                    raise Exception("Redis healthcheck failed")
+
+        except Exception as e:
+            print(f"Redis unavailable, falling back to SimpleCache. Error: {e}")
+            app.config.update({
+                "CACHE_TYPE": "SimpleCache",
+                "CACHE_DEFAULT_TIMEOUT": 60,
+            })
+            cache.init_app(app)
+            print("SimpleCache mode enabled")
+    else:
+        app.config.update({
+            "CACHE_TYPE": "SimpleCache",
+            "CACHE_DEFAULT_TIMEOUT": 60,
+        })
+        cache.init_app(app)
+        print("SimpleCache mode enabled (no Redis)")
+
 
 
     # Init extensions
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
+    cache.init_app(app)
     Migrate(app, db)
+    
 
     from backend.routes.auth_routes import auth_bp
     from backend.routes.admin_routes import admin_bp
@@ -53,6 +96,12 @@ def create_app():
     return app
 
 if __name__ == "__main__":
-    app = create_app()
+    use_redis = False
+    large_data = False
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "redis":
+        use_redis = True
+    if len(sys.argv) > 2 and sys.argv[2].lower() == "l":
+        large_data = True
+    app = create_app(use_redis,large_data)
     port = int(os.environ.get("FLASK_PORT", 5000))
     app.run(debug=True, port=port)

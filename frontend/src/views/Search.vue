@@ -1,123 +1,117 @@
 <template>
   <div class="container mt-4">
     <h2>Admin Search</h2>
+    <div v-if="searchType === 'user' " class="row text-center mb-4">
+      <DataTable :columns="userCols" :rows="users">
+        <!-- Custom cell for From -->
+        <template #start_time="{ row }">
+          {{ f_date(row.start_time) }}
+        </template>
+        <!-- Custom cell for To -->
+        <template #end_time="{ row }">
+          {{ f_date(row.end_time) }}
+        </template>
+        <!-- Custom cell for Action -->
+        <template #status="{ row }">
+          <button v-if="row.status === 'active'" class="btn btn-sm btn-danger" @click="showDetails(row.id)">
+            Release
+          </button>
+          <span v-else class="badge bg-success">Parked Out</span>
+        </template>
+      </DataTable>
 
-    <div class="row mb-3">
-      <div class="col-md-3">
-        <select v-model="searchBy" class="form-select">
-          <option disabled value="">Search By</option>
-          <option value="name">Name</option>
-          <option value="mobile">Mobile</option>
-          <option value="address">Address</option>
-          <option value="vehicles">Vehicles</option>
-          <option value="driver">Driver Name</option>
-          <option value="parking_lots">Parking Lots</option>
-        </select>
-      </div>
-
-      <div class="col-md-5">
-        <input type="text" v-model="searchValue" class="form-control" placeholder="Enter search value" />
-      </div>
-
-      <div class="col-md-2">
-        <select v-model="searchType" class="form-select">
-          <option value="users">Users</option>
-          <option value="bookings">Bookings</option>
-          <option value="payments">Payments</option>
-          
-        </select>
-      </div>
-
-      <div class="col-md-2">
-        <button @click="performSearch" class="btn btn-primary w-100">
-          Search
-        </button>
-      </div>
     </div>
 
-    <!-- Results Table -->
-    <div v-if="results.length > 0" class="mt-4">
-      <h5>Results</h5>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th v-for="col in tableHeaders" :key="col">{{ col }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in results" :key="item.id">
-            <td v-for="col in tableHeaders" :key="col">
-              {{ item[col] }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
 
-    <div v-else-if="searched" class="alert alert-warning">
-      No results found.
-    </div>
   </div>
 </template>
 
-<script>
-import { apiFetch } from '../api'
+<script setup>
+import { ref } from "vue";
+import { apiFetch } from "../api";
+import { useSearchStore } from "../stores/search";
+import DataTable from "@/components/DataTable.vue";
+
+const userCols = [
+  { key: "lot_prefix", label: "ID" ,filterType :"select"},
+  { key: "spot_id", label: "Location" },
+  { key: "vehicle_number", label: "Vehicle No" },
+  { key: "start_time", label: "From" },
+  { key: "end_time", label: "To" },
+  { key: "driver_name", label: "Driver Name" },
+  { key: "driver_contact", label: "Driver Contact" },
+  { key: "status", label: "Action" }
+];
+
+const searchBy = ref("");
+const searchValue = ref("");
+const results = ref([]);
+const searched = ref(false);
+const tableHeaders = ref([]);
+const users = ref([]);
 
 
-export default {
-  name: "SearchAdmin",
-  data() {
-    return {
-      searchBy: "",
-      searchValue: "",
-      searchType: "users",
-      results: [],
-      searched: false,
-      tableHeaders: []
-    }
-  },
-  methods: {
-    async performSearch() {
-      if (!this.searchBy || !this.searchValue) {
-        alert("Please select search by and enter a value.")
-        return
-      }
+const searchStore = useSearchStore();
+const searchType = searchStore.searchType; // reactive
 
-      try {
-        const endpoint =
-          this.searchType === "users"
-            ? "/admin/search/users"
-            : "/admin/search/bookings"
 
-        const url = `${endpoint}?search_by=${this.searchBy}&value=${encodeURIComponent(this.searchValue)}`
 
-        const response = await apiFetch(url, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("access_token")}` // if JWT is needed
-          }
-        })
-
-        if (!response.ok) {
-          throw new Error("Network response was not ok")
-        }
-
-        const data = await response.json()
-        this.results = data
-        this.searched = true
-
-        if (this.results.length > 0) {
-          this.tableHeaders = Object.keys(this.results[0])
-        } else {
-          this.tableHeaders = []
-        }
-      } catch (error) {
-        console.error("Search error:", error)
-        alert("Error fetching search results.")
-      }
-    }
-
+async function performSearch() {
+  if (!searchBy.value || !searchValue.value) {
+    alert("Please select search by and enter a value.");
+    return;
   }
+
+  try {
+    // Decide endpoint based on global searchType
+    const endpoint =
+      searchType === "user"
+        ? "/admin/search/users"
+        : searchType === "reservation"
+          ? "/admin/search/bookings"
+          : "/admin/search/lots";
+
+    const url = `${endpoint}?search_by=${searchBy.value}&value=${encodeURIComponent(
+      searchValue.value
+    )}`;
+
+    const response = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    const data = await response.json();
+    results.value = data;
+    searched.value = true;
+
+    if (results.value.length > 0) {
+      tableHeaders.value = Object.keys(results.value[0]);
+    } else {
+      tableHeaders.value = [];
+    }
+  } catch (error) {
+    console.error("Search error:", error);
+    alert("Error fetching search results.");
+  }
+}
+// Release a spot
+async function showDetails(reservationId) {
+  const res = await apiFetch(`/user/release/${reservationId}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token.value}` },
+  });
+  if (res.ok) {
+    reservations.value = reservations.value.map((r) =>
+      r.id === reservationId ? { ...r, status: 'completed' } : r
+    );
+  }
+  //fetchReservations();
 }
 </script>

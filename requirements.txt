@@ -8,3 +8,7 @@ celery
 werkzeug
 flask_bcrypt
 flask_cors
+redis 
+celery 
+flask-caching
+reportlab

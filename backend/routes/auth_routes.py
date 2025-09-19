@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify, session
 from backend.extensions import db, bcrypt  
 from backend.models import User
 from flask_jwt_extended import create_access_token
+from werkzeug.security import generate_password_hash
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -16,7 +17,7 @@ def register():
     if User.query.filter_by(email=data["email"]).first():
         return jsonify({"error": "User already exists"}), 400
 
-    hashed_password = bcrypt.generate_password_hash(data["password"]).decode("utf-8")
+    hashed_password = generate_password_hash(data["password"]).decode("utf-8")
     user = User(
         email=data["email"],
         name=data.get("name", ""),

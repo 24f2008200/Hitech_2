@@ -1,8 +1,5 @@
 from flask import Blueprint, request, jsonify, send_file
 from sqlalchemy import func ,extract
-from backend.app import db
-from backend.models import ParkingLot, ParkingSpot, Reservation, User
-from backend.routes.utils.auth import auth_required , admin_required
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -10,6 +7,11 @@ from reportlab.lib.utils import ImageReader
 from reportlab.platypus import Table, TableStyle
 from io import BytesIO
 import base64
+
+from backend.extensions import db,cache
+from backend.models import ParkingLot, ParkingSpot, Reservation, User
+from backend.routes.utils.auth import auth_required , admin_required
+from backend.services.parking_service import get_all_lots
 
 
 
@@ -40,6 +42,7 @@ def create_lot():
         spot = ParkingSpot(lot_id=lot.id, label=f"{lot.prefix}pot-{i+1}")
         db.session.add(spot)
     db.session.commit()
+    cache.delete("all_lots")
 
     return jsonify({"message": "Parking lot created", "id": lot.id}), 201
 
@@ -47,24 +50,7 @@ def create_lot():
 @admin_bp.route("/lots", methods=["GET"])
 @admin_required
 def list_lots():
-    lots = ParkingLot.query.all()
-    return jsonify([
-        {
-            "id": lot.id,
-            "name": lot.name,
-            "address": lot.address,
-            "pin_code": lot.pin_code,
-            "price": lot.price,
-            "number_of_spots": lot.number_of_spots,
-            "available_spots": sum(1 for s in lot.spots if s.status == "A"),
-            "occupied_spots": sum(1 for s in lot.spots if s.status == "O"),
-            "spots": [
-                spot.get_details
-                for spot in lot.spots
-            ]
-        }
-        for lot in lots
-    ]), 200
+    return get_all_lots(), 200
 
 # View all users
 @admin_bp.route("/users", methods=["GET"])
@@ -75,6 +61,10 @@ def list_users():
                      "name": u.name, "mobile": u.mobile,
                      "address": u.address, "is_blocked": u.is_admin < 0  } for u in users])
 
+@admin_bp.route("/search/bookings", methods=["GET"])
+@admin_required
+def search_bookings():
+    res = Reservation
 
 @admin_bp.route("/search", methods=["GET"])
 @admin_required
@@ -104,6 +94,8 @@ def delete_parking_slot(slot_id):
     lot = slot.lot
     lot.delete_spot(slot.id)  
     db.session.commit()
+    cache.delete("all_lots")
+
     return jsonify({"message": "Parking slot deleted"}), 200
 
 # Update parking lot
@@ -122,6 +114,7 @@ def update_parking_lot(lot_id):
     lot.address = data.get("address", lot.address)
     lot.pin_code = data.get("pin_code", lot.pin_code)
     db.session.commit()
+    cache.delete("all_lots")
 
     return jsonify({"message": "Parking lot updated"}), 200
 
@@ -138,6 +131,7 @@ def delete_parking_lot(lot_id):
 
     db.session.delete(lot)
     db.session.commit()
+    cache.delete("all_lots")
     return jsonify({"message": "Lot deleted"}), 200
 
 

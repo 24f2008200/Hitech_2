@@ -28,6 +28,7 @@ class User(db.Model, SerializerMixin):
     is_admin = db.Column(db.Boolean, default=False)
     role = db.Column(db.String(50), default="user")  # NEW
     address = db.Column(db.String(512))
+    reservations = db.relationship("Reservation", back_populates="user")
 
     def set_password(self, password: str):
         self.password = generate_password_hash(password)
@@ -189,7 +190,7 @@ class Reservation(db.Model, SerializerMixin):
     active = db.Column(db.Boolean, default=True)
 
     # Relationships
-    user = db.relationship("User", backref="reservations")
+    user = db.relationship("User", back_populates="reservations")
     spot = db.relationship("ParkingSpot", back_populates="reservations")
 
     # def end_reservation(self, end_time, cost: float):

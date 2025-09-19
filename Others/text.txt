@@ -2,6 +2,7 @@
 python -m venv venv
 source venv/Scripts/activate
 pip install -r requirements.txt
+./venv/Scripts/python.exe -m pip install -r requirements.txt
 
 python -m backend.init_db
 
@@ -9,13 +10,30 @@ python -m backend.init_db
 python -m init_db.app
 python -m backend.app
 
+python -m backend.app redis L
+
 npm run dev
 
-redis-server
+Ubuntu (WSL) terminal
+To start Redis: sudo service redis-server start
+# or
+redis-server --daemonize yes
+
+To check if it’s running:     redis-cli ping
+
+To stop Redis:   sudo service redis-server stop
+# or
+redis-cli shutdown
+
+
+
 
 pip install redis flask-caching
 
 python -m init_db
+python -m init_db2
+
+
 
 
 ngrok config add-authtoken 32sH40OoZLDfJVdlczpkatNhdzE_2kKkGCRWGZ8H6yQK5vN4t

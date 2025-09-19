@@ -51,21 +51,12 @@ const props = defineProps({
 // reactive filters
 const filters = ref({})
 
-// computed filteredRows uses props.rows and filters.value
-// const filteredRows = computed(() => {
-//   // if rows is undefined, return empty array safely
-//   const rows = props.rows || []
-//   return rows.filter(row =>
-//     Object.keys(filters.value).every(key =>
-//       !filters.value[key] || row[key] === filters.value[key]
-//     )
-//   )
-// })
+
 
 const filteredRows = computed(() => {
   return props.rows.filter(row =>
     Object.keys(filters.value).every(key => {
-      const filter = filters.value[key]
+      const filter = String(filters.value[key])
       if (!filter) return true
 
       const col = props.columns.find(c => c.key === key)

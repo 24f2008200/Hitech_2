@@ -1,103 +1,10 @@
 import random
 import datetime
+import string
 
 NUM_SLOTS = 75
 NUM_CARS = 200
 NUM_DRIVERS = 100
-
-# Example car/driver pools
-car_numbers = [f"CAR{i:03d}" for i in range(1, NUM_CARS+1)]
-driver_names = [f"Driver{i:03d}" for i in range(1, NUM_DRIVERS+1)]
-
-# Spot weight levels
-spot_weights = []
-for i in range(1, NUM_SLOTS+1):
-    if 1 <= i <= 5:       # VIP
-        spot_weights.append(10)
-    elif 6 <= i <= 15:    # Premium
-        spot_weights.append(5)
-    else:                 # Normal
-        spot_weights.append(1)
-
-# Time dependency (hour → weight for demand)
-time_weights = {
-    # Morning
-    8: 0.3, 9: 0.5, 10: 0.6, 11: 0.7,
-    # Midday peak
-    12: 1.0, 13: 1.0, 14: 0.9, 15: 0.8,
-    # Evening
-    16: 0.7, 17: 0.8, 18: 0.6, 19: 0.5, 20: 0.4
-}
-
-def generate_reservations(num_days=3):
-    reservations = []
-    today = datetime.date.today()
-
-    for day in range(num_days):
-        date = today + datetime.timedelta(days=day)
-        weekday = date.weekday()  # Monday=0, Sunday=6
-
-        # Weekend boost factor
-        weekend_boost = 1.5 if weekday >= 5 else 1.0
-
-        for hour in range(8, 21):  # 8 AM – 8 PM
-            available_cars = car_numbers[:]
-            available_drivers = driver_names[:]
-            available_spots = list(range(1, NUM_SLOTS+1))
-
-            # Base demand range
-            base_min, base_max = 5, 30
-
-            # Scale with time-of-day weight + weekend factor
-            weight = time_weights.get(hour, 0.5) * weekend_boost
-            num_reservations = random.randint(
-                int(base_min * weight),
-                max(int(base_max * weight), 1)
-            )
-
-            for _ in range(num_reservations):
-                if not available_cars or not available_drivers or not available_spots:
-                    break
-
-                # Pick car & driver
-                car = random.choice(available_cars)
-                driver = random.choice(available_drivers)
-                available_cars.remove(car)
-                available_drivers.remove(driver)
-
-                # Weighted spot selection
-                weights = [spot_weights[s-1] for s in available_spots]
-                spot_no = random.choices(available_spots, weights=weights, k=1)[0]
-                available_spots.remove(spot_no)
-
-                # Duration (random, can spill into next hours/days)
-                duration = random.choice([1, 2, 3, 4])
-                start_time = datetime.datetime.combine(date, datetime.time(hour))
-                end_time = start_time + datetime.timedelta(hours=duration)
-
-                # If past closing, mark as overnight
-                if end_time.hour > 20:
-                    end_time = None
-
-                reservations.append({
-                    "date": str(date),
-                    "hour": hour,
-                    "spot": spot_no,
-                    "car": car,
-                    "driver": driver,
-                    "start_time": str(start_time),
-                    "end_time": str(end_time) if end_time else None
-                })
-
-    return reservations
-
-
-# Example usage
-if __name__ == "__main__":
-    data = generate_reservations(5)  # 5 days
-    for r in data[:40]:  # show first 40
-        print(r)
-    print(f"\nGenerated total {len(data)} reservations.")
 
 drivers = [
     {"name": "Aarav Sharma", "mobile": "9876543210"},
@@ -205,4 +112,145 @@ drivers = [
     {"name": "Parminder Sidhu", "mobile": "9877112233"},
     {"name": "Harpal Dhillon", "mobile": "9811994455"},
     {"name": "Ravinder Brar", "mobile": "9766551122"}
+]
+
+# Example car/driver pools
+state_codes = ["MH", "DL", "KA", "TN", "WB", "UP", "RJ", "GJ", "KL", "AP", "MP", "HR", "PB", "BR", "OD"]
+
+NUM_CARS = 100
+car_numbers = []
+
+for _ in range(NUM_CARS):
+    state = random.choice(state_codes)                       # 2-letter state
+    district = f"{random.randint(1, 99):02d}"               # 2-digit district
+    series = random.choice(string.ascii_uppercase)           # 1 letter
+    number = f"{random.randint(1, 9999):04d}"               # 4-digit number
+    car_number = f"{state} {district}{series} {number}"
+    car_numbers.append(car_number)
+drivers_dict = {entry["name"]: entry["mobile"] for entry in drivers}
+driver_names = list(drivers_dict.keys())
+# Spot weight levels
+spot_weights = []
+for i in range(1, NUM_SLOTS+1):
+    if 1 <= i <= 5:       # VIP
+        spot_weights.append(10)
+    elif 6 <= i <= 15:    # Premium
+        spot_weights.append(5)
+    else:                 # Normal
+        spot_weights.append(1)
+
+# Time dependency (hour → weight for demand)
+time_weights = {
+    # Morning
+    8: 0.3, 9: 0.5, 10: 0.6, 11: 0.7,
+    # Midday peak
+    12: 1.0, 13: 1.0, 14: 0.9, 15: 0.8,
+    # Evening
+    16: 0.7, 17: 0.8, 18: 0.6, 19: 0.5, 20: 0.4
+}
+
+import datetime, random
+
+def generate_reservations(history_days=7):
+    reservations = []
+    today = datetime.date.today()
+    start_date = today - datetime.timedelta(days=history_days-1)
+
+    # Track when each car is next available
+    car_next_free = {car: start_date for car in car_numbers}
+
+    for day_offset in range(history_days):
+        date = start_date + datetime.timedelta(days=day_offset)
+        weekday = date.weekday()  # Monday=0, Sunday=6
+
+        weekend_boost = 1.5 if weekday >= 5 else 1.0
+
+        for hour in range(8, 21):  # 8 AM – 8 PM
+            now = datetime.datetime.combine(date, datetime.time(hour))
+
+            available_cars = [
+                car for car, free_time in car_next_free.items()
+                if now >= free_time
+            ]
+            available_drivers = driver_names[:]
+            available_spots = list(range(1, NUM_SLOTS+1))
+
+            base_min, base_max = 5, 30
+            weight = time_weights.get(hour, 0.5) * weekend_boost
+            num_reservations = random.randint(
+                int(base_min * weight),
+                max(int(base_max * weight), 1)
+            )
+
+            for _ in range(num_reservations):
+                if not available_cars or not available_drivers or not available_spots:
+                    break
+
+                car = random.choice(available_cars)
+                available_cars.remove(car)
+
+                driver = random.choice(available_drivers)
+                driver_mobile = drivers_dict[driver]
+                available_drivers.remove(driver)
+
+                weights = [spot_weights[s-1] for s in available_spots]
+                spot_no = random.choices(available_spots, weights=weights, k=1)[0]
+                available_spots.remove(spot_no)
+
+                duration = random.choice([1, 2, 3, 4])
+                start_time = now
+                end_time = start_time + datetime.timedelta(hours=duration)
+
+                # If past 8 PM, leave it as ongoing (overnight)
+                if end_time.hour > 20:
+                    end_time = None
+
+                # Update car availability
+                if end_time:
+                    car_next_free[car] = end_time
+                else:
+                    car_next_free[car] = datetime.datetime.combine(
+                        date + datetime.timedelta(days=1),
+                        datetime.time(8)
+                    )
+
+                reservations.append({
+                    "date": str(date),
+                    "hour": hour,
+                    "spot": spot_no,
+                    "car": car,
+                    "driver": driver,
+                    "driver_mobile": driver_mobile,
+                    "start_time": str(start_time),
+                    "end_time": str(end_time) if end_time else None
+                })
+
+    return reservations
+
+# Example usage
+if __name__ == "__main__":
+    data = generate_reservations(5)  # 5 days
+    for r in data[:40]:  # show first 40
+        print(r)
+    print(f"\nGenerated total {len(data)} reservations.")
+names = [
+    "Aarav", "Vivaan", "Aditya", "Vihaan", "Arjun", "Sai", "Reyansh", "Krishna", "Ishaan", "Shaurya",
+    "Ananya", "Diya", "Aadhya", "Pari", "Avni", "Anika", "Navya", "Myra", "Ira", "Kiara",
+    "Lakshmi", "Priya", "Rani", "Kavya", "Pooja", "Sneha", "Nisha", "Radha", "Divya", "Meera",
+    "Rahul", "Amit", "Suresh", "Ramesh", "Vijay", "Karthik", "Sanjay", "Deepak", "Manoj", "Arvind",
+    "Sunita", "Geeta", "Seema", "Lata", "Rekha", "Neha", "Shreya", "Aarti", "Payal", "Jyoti"
+]
+
+# Sample addresses in Indian cities
+addresses = [
+    "156, 5th Cross Road, Goregaon West, Mumbai",
+    "22, MG Road, Indiranagar, Bangalore",
+    "47, Park Street, Kolkata",
+    "89, Anna Salai, Teynampet, Chennai",
+    "12, Connaught Place, New Delhi",
+    "78, Sector 18, Noida",
+    "34, Baner Road, Pune",
+    "56, Banjara Hills, Hyderabad",
+    "9, Civil Lines, Jaipur",
+    "44, Lalbagh Road, Lucknow"
 ]

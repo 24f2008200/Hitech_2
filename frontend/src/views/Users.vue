@@ -31,7 +31,7 @@ import DataTable from "@/components/DataTable.vue";
 const { token } = useAuth();
 const users = ref([]);
 const userCols = [
-  { key: "id", label: "ID" },
+  { key: "id", label: "ID" ,filterType :"select"},
   { key: "name", label: "Name" },
   { key: "email", label: "E-Mail" },
   { key: "mobile", label: "Mobile" },
