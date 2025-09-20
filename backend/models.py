@@ -35,6 +35,9 @@ class User(db.Model, SerializerMixin):
 
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password, password)
+    @hybrid_property
+    def billing(self):
+        return sum( [ r.parking_fee for r in self.reservations if r.parking_fee != None] )
 
 
 class ParkingLot(db.Model, SerializerMixin):
@@ -152,7 +155,7 @@ class ParkingSpot(db.Model, SerializerMixin):
                 "label": self.label,
                 "status": self.status,
                 "vehicle_number": r.vehicle_number if r else None,
-                "occupied_since": r.start_time if r else None,
+                "start_time": r.start_time if r else None,
                 "user_name": u.name if u else None,
                 "driver_contact": r.driver_contact if r else None,
                 "driver_name": r.driver_name if r else None,
@@ -192,8 +195,38 @@ class Reservation(db.Model, SerializerMixin):
     # Relationships
     user = db.relationship("User", back_populates="reservations")
     spot = db.relationship("ParkingSpot", back_populates="reservations")
+    
+    def to_dict(self):
+        return model_to_dict(self)
+    
+    @hybrid_property
+    def get_details(self):
+
+        return {
+                "id": self.id,
+                "label": self.spot.label,
+             
+                "vehicle_number": self.vehicle_number ,
+                "start_time": self.start_time ,
+                "user_name": self.user.name ,
+                "driver_contact": self.driver_contact ,
+                "driver_name": self.driver_name ,
+                "end_time": self.end_time ,
+                "total_earnings": self.parking_fee
+        }
 
     # def end_reservation(self, end_time, cost: float):
     #     self.end_time = end_time
     #     self.parking_fee = cost
     #     self.active = False
+
+
+def model_to_dict(obj):
+    result = {}
+    for col in obj.__table__.columns:
+        value = getattr(obj, col.name)
+        if isinstance(value, datetime):
+            result[col.name] = value.isoformat()  # safe for Vue inputs
+        else:
+            result[col.name] = value
+    return result

@@ -36,8 +36,10 @@ const userCols = [
   { key: "email", label: "E-Mail" },
   { key: "mobile", label: "Mobile" },
   { key: "address", label: "Address" },
+   { key: "rev", label: "Revenue" },
   { key: "status", label: "Action" }
 ];
+const f_date = (raw) => raw ? new Date(raw).toLocaleString() : '';
 
 async function fetchUsers() {
   const res = await apiFetch("/admin/users", {

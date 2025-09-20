@@ -1,123 +1,213 @@
 <template>
   <div class="container mt-4">
-    <h2>Admin Search</h2>
-
-    <div class="row mb-3">
-      <div class="col-md-3">
-        <select v-model="searchBy" class="form-select">
-          <option disabled value="">Search By</option>
-          <option value="name">Name</option>
-          <option value="mobile">Mobile</option>
-          <option value="address">Address</option>
-          <option value="vehicles">Vehicles</option>
-          <option value="driver">Driver Name</option>
-          <option value="parking_lots">Parking Lots</option>
-        </select>
-      </div>
-
-      <div class="col-md-5">
-        <input type="text" v-model="searchValue" class="form-control" placeholder="Enter search value" />
-      </div>
-
-      <div class="col-md-2">
-        <select v-model="searchType" class="form-select">
-          <option value="users">Users</option>
-          <option value="bookings">Bookings</option>
-          <option value="payments">Payments</option>
-          
-        </select>
-      </div>
-
-      <div class="col-md-2">
-        <button @click="performSearch" class="btn btn-primary w-100">
-          Search
-        </button>
-      </div>
+    <h2>{{ title }} Search</h2>
+    <div v-if="searchStore.searchType === 'user'" class="row text-center mb-4">
+      <DataTable :columns="userCols" :rows="results" @action-click="handleAction"></DataTable>
     </div>
-
-    <!-- Results Table -->
-    <div v-if="results.length > 0" class="mt-4">
-      <h5>Results</h5>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th v-for="col in tableHeaders" :key="col">{{ col }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in results" :key="item.id">
-            <td v-for="col in tableHeaders" :key="col">
-              {{ item[col] }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-else-if="searchStore.searchType === 'reservation'" class="row text-center mb-4">
+      <DataTable :columns="reservationCols" :rows="results" @action-click="handleAction"></DataTable>
     </div>
-
-    <div v-else-if="searched" class="alert alert-warning">
-      No results found.
+    <div v-else-if="searchStore.searchType === 'lot'" class="row text-center mb-4">
+      <DataTable :columns="lotCols" :rows="results" @action-click="handleAction"></DataTable>
+    </div>
+    <!-- Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true" ref="editModalEl">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-body">
+            <RowEditor v-if="editingRow" :title="editingRow.id" :row="editingRow" :fields="editorFields"
+              @save="saveChanges" @cancel="editingRow = null" />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
-<script>
-import { apiFetch } from '../api'
+<script setup>
+import { ref, onMounted, onUnmounted } from "vue";
+import { apiFetch } from "../api";
+import { useSearchStore } from "../stores/search";
+import DataTable from "@/components/DataTable.vue";
+import RowEditor from "@/components/RowEditor.vue";
 
+const userCols = [
+  { key: "id", label: "ID", filterType: "select", type: "noedit" },
+  { key: "name", label: "Name", type: "text" },
+  { key: "mobile", label: "Mobile", type: "number" },
+  { key: "address", label: "Address", type: "text" },
+  { key: "email", label: "E-Mail", type: "text" },
+  { key: "edit", label: "Edit", type: "action" }
+];
 
-export default {
-  name: "SearchAdmin",
-  data() {
-    return {
-      searchBy: "",
-      searchValue: "",
-      searchType: "users",
-      results: [],
-      searched: false,
-      tableHeaders: []
-    }
-  },
-  methods: {
-    async performSearch() {
-      if (!this.searchBy || !this.searchValue) {
-        alert("Please select search by and enter a value.")
-        return
-      }
+const reservationCols = [
+  { key: "id", label: "ID", filterType: "select", type: "noedit" },
+  { key: "spot_id", label: "Spot", type: "text" },
+  { key: "user_id", label: "User", type: "text" },
+  { key: "vehicle_number", label: "Vechile", type: "text" },
+  { key: "start_time", label: "From", type: "date" },
+  { key: "end_times", label: "To", type: "date" },
+  { key: "driver_name", label: "Driver", type: "text" },
+  { key: "driver_contact", label: "Contact", type: "number" },
+  { key: "edit", label: "Edit", type: "action" }
+];
+const lotCols = [
+  { key: "id", label: "ID", filterType: "select", type: "noedit" },
+  { key: "name", label: "Name", type: "text" },
+  { key: "address", label: "Address", type: "text" },
+  { key: "available_spots", label: "Available", type: "number" },
+  { key: "occupied_spots", label: "Occupied", type: "number" },
+  { key: "price", label: "Price", type: "number" },
+  { key: "edit", label: "Edit", type: "action" }
+];
 
-      try {
-        const endpoint =
-          this.searchType === "users"
-            ? "/admin/search/users"
-            : "/admin/search/bookings"
+const searchBy = ref("");
+//const searchValue = ref("");
+const results = ref([]);
+const searched = ref(false);
+const tableHeaders = ref([]);
+const users = ref([]);
+const searchStore = useSearchStore();
 
-        const url = `${endpoint}?search_by=${this.searchBy}&value=${encodeURIComponent(this.searchValue)}`
+const title = searchStore.searchType === 'user' ? 'User' : searchStore.searchType === 'lot' ? 'Lot' : 'Reservation'
 
-        const response = await apiFetch(url, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("access_token")}` // if JWT is needed
-          }
-        })
+const f_date = (raw) => raw ? new Date(raw).toLocaleString() : '';
+onMounted(() => {
+  // Register this page’s action
+  console.log("Attempting Navbar action registered");
+  searchStore.setNavbarAction(performSearch);
+  performSearch();
+})
 
-        if (!response.ok) {
-          throw new Error("Network response was not ok")
-        }
-
-        const data = await response.json()
-        this.results = data
-        this.searched = true
-
-        if (this.results.length > 0) {
-          this.tableHeaders = Object.keys(this.results[0])
-        } else {
-          this.tableHeaders = []
-        }
-      } catch (error) {
-        console.error("Search error:", error)
-        alert("Error fetching search results.")
-      }
-    }
-
+onUnmounted(() => {
+  // Clean up when leaving page
+  console.log("Attempting Navbar action removed");
+  searchStore.setNavbarAction(null)
+})
+async function rowClicked() {
+  const searchType = searchStore.searchType; // reactive
+  const searchValue = searchStore.searchValue;
+  if (searchType === 'user') {
+    console.log("Attempting user");
+  } else if (searchType === 'lot') {
+    console.log("Attempting lot");
+  } else if (searchType === 'reservation') {
+    console.log("Attempting reservation");
   }
+
+}
+const editingRow = ref(null)
+const editorTitle = ref("")
+const editorFields = ref([])
+
+let modalInstance = null
+const editModalEl = ref(null)
+function handleAction({ action, id, row }) {
+  const searchType = searchStore.searchType; // reactive
+  const searchValue = searchStore.searchValue;
+  if (searchType === 'user') {
+    console.log("Attempting user");
+    editorTitle.value = "Edit Parking Lot"
+    editorFields.value = userCols
+  } else if (searchType === 'lot') {
+    console.log("Attempting lot");
+    editorTitle.value = "Edit  Lot"
+    editorFields.value = lotCols
+  } else if (searchType === 'reservation') {
+    console.log("Attempting reservation");
+    editorTitle.value = "Edit Reservation"
+    editorFields.value = reservationCols
+  }
+  if (action === "edit") {
+    console.log("Edit row:", id, row)
+    editingRow.value = { ...row }
+    // editorTitle.value = "Edit Parking Lot"
+    // editorFields.value = userCols
+    openModal()
+  }
+}
+function saveChanges(updatedRow) {
+  console.log(updatedRow)
+  // Replace row in rows
+  const idx = results.value.findIndex(r => r.id === updatedRow.id)
+  if (idx !== -1) results.value[idx] = updatedRow
+
+  closeModal()
+}
+
+function openModal() {
+  if (!modalInstance) {
+    modalInstance = new bootstrap.Modal(editModalEl.value)
+  }
+  modalInstance.show()
+}
+
+function closeModal() {
+
+  if (modalInstance) {
+    modalInstance.hide()
+  }
+}
+async function performSearch() {
+  const searchType = searchStore.searchType; // reactive
+  const searchValue = searchStore.searchValue;
+  console.log("sperformSearch earch bar searchType", searchType)
+  // console.log("performSearch search bar searchValue", searchValue)
+  if (!searchType) {
+    alert("Please select search by and enter a value.")
+    return
+  }
+
+  try {
+    // Decide endpoint based on global searchType
+    const endpoint =
+      searchType === "user"
+        ? "/admin/search/users"
+        : searchType === "reservation"
+          ? "/admin/search/bookings"
+          : "/admin/search/lots";
+
+    const url = `${endpoint}?search_by=${searchType}&value=${encodeURIComponent(
+      searchValue
+    )}`;
+    console.log("search bar url", url)
+    const response = await apiFetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Network response was not ok");
+    }
+
+    const data = await response.json();
+    results.value = data;
+    searched.value = true;
+
+    if (results.value.length > 0) {
+      tableHeaders.value = Object.keys(results.value[0]);
+    } else {
+      tableHeaders.value = [];
+    }
+  } catch (error) {
+    console.error("Search error:", error);
+    // alert("Error fetching search results.");
+  }
+}
+// Release a spot
+async function showDetails(reservationId) {
+  const res = await apiFetch(`/user/release/${reservationId}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token.value}` },
+  });
+  if (res.ok) {
+    reservations.value = reservations.value.map((r) =>
+      r.id === reservationId ? { ...r, status: 'completed' } : r
+    );
+  }
+  //fetchReservations();
 }
 </script>

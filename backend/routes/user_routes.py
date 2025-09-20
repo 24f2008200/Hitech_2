@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash
-from datetime import datetime
+from datetime import datetime,UTC ,timezone
 from backend.app import db
 from backend.models import Reservation, ParkingSpot, ParkingLot,User
 from backend.routes.utils.auth import auth_required, admin_required, current_user
@@ -79,7 +79,16 @@ def release_spot(res_id):
 
     # Calculate cost (duration * lot price)
     lot_price = reservation.spot.lot.price
-    duration_hours = (reservation.end_time - reservation.start_time).total_seconds() / 3600
+    start = reservation.start_time
+    end = reservation.end_time
+
+    if start.tzinfo is None:
+        start = start.replace(tzinfo=timezone.utc)
+    if end.tzinfo is None:
+        end = end.replace(tzinfo=timezone.utc)
+
+    duration_hours = (end - start).total_seconds() / 3600
+
     reservation.parking_fee = round(duration_hours * lot_price, 2)
 
     db.session.commit()

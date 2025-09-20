@@ -7,21 +7,21 @@
             {{ col.label }}
             <div v-if="enableFilters" class="filters">
               <!-- <div v-for="col in columns" :key="col.key" class="mb-2"> -->
-                <!-- <label class="me-2">{{ col.label || col.key }}</label> -->
+              <!-- <label class="me-2">{{ col.label || col.key }}</label> -->
 
-                <!-- Dropdown filter -->
-                <select v-if="col.filterType === 'select'" v-model="filters[col.key]"
-                  class="form-select form-select-sm w-auto d-inline-block">
-                  <option value="">All</option>
-                  <option v-for="v in uniqueValues(col.key)" :key="v" :value="v">
-                    {{ v }}
-                  </option>
-                </select>
+              <!-- Dropdown filter -->
+              <select v-if="col.filterType === 'select'" v-model="filters[col.key]"
+                class="form-select form-select-sm w-auto d-inline-block">
+                <option value="">All</option>
+                <option v-for="v in uniqueValues(col.key)" :key="v" :value="v">
+                  {{ v }}
+                </option>
+              </select>
 
-                <!-- Input filter -->
-                <input v-else v-model="filters[col.key]" type="text"
-                  class="form-control form-control-sm w-auto d-inline-block"
-                  :placeholder="`Filter by ${col.label || col.key}`" />
+              <!-- Input filter -->
+              <input v-else v-model="filters[col.key]" type="text"
+                class="form-control form-control-sm w-auto d-inline-block"
+                :placeholder="`Filter by ${col.label || col.key}`" />
               <!-- </div> -->
             </div>
           </th>
@@ -29,8 +29,19 @@
       </thead>
       <tbody>
         <tr v-for="row in filteredRows" :key="row.id">
-          <td v-for="col in columns" :key="col.key" class="px-2 py-1">
+          <!-- <td v-for="col in columns" :key="col.key" class="px-2 py-1">
             <slot :name="col.key" :row="row">{{ row[col.key] }}</slot>
+          </td> -->
+          <td v-for="col in columns" :key="col.key" class="px-2 py-1">
+            <template v-if="col.type === 'action'">
+              <button class="btn btn-sm btn-primary me-1"
+                @click="emit('action-click', { action: col.key, id: row.id, row })">
+                {{ col.label }}
+              </button>
+            </template>
+            <template v-else>
+              <slot :name="col.key" :row="row">{{ row[col.key] }}</slot>
+            </template>
           </td>
         </tr>
       </tbody>
@@ -40,6 +51,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+const emit = defineEmits(["action-click"])
 
 // Use props safely by assigning const props = defineProps(...)
 const props = defineProps({
@@ -68,7 +80,7 @@ const filteredRows = computed(() => {
       } else {
         // substring match for free typing
         return value.toLowerCase().includes(filter.toLowerCase())
-        
+
       }
     })
   )

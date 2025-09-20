@@ -118,14 +118,14 @@ import DataTable from "@/components/DataTable.vue";
 
 const { token } = useAuth();
 const reservationColumns = [
-  { key: "lot_prefix", label: "ID" ,filterType :"select"},
-  { key: "spot_id", label: "Location" },
-  { key: "vehicle_number", label: "Vehicle No" },
-  { key: "start_time", label: "From" },
-  { key: "end_time", label: "To" },
-  { key: "driver_name", label: "Driver Name" },
+  { key: "lot_prefix", label: "ID" ,filterType :"select" ,type: "noedit" },
+  { key: "spot_id", label: "Location" , type: "noedit" },
+  { key: "vehicle_number", label: "Vehicle No" , type: "text" },
+  { key: "start_time", label: "From" , type: "date" },
+  { key: "end_time", label: "To" , type: "date" },
+  { key: "driver_name", label: "Driver Name" , type: "text" },
   { key: "driver_contact", label: "Driver Contact" },
-  { key: "status", label: "Action" }
+   { key: "status", label: "Action"  }
 ];
 
 
@@ -196,6 +196,7 @@ async function fetchReservations() {
 
 // Release a spot
 async function releaseSpot(reservationId) {
+  console.log("Released")
   const res = await apiFetch(`/user/release/${reservationId}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token.value}` },

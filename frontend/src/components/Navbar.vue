@@ -29,24 +29,30 @@
         <li class="nav-item">
           <RouterLink class="nav-link" to="/admin/summary">Summary</RouterLink>
         </li>
-        <!-- <li class="nav-item">
+        <li class="nav-item">
           <RouterLink class="nav-link" to="/search">Search</RouterLink>
-        </li> -->
+        </li>
       </ul>
       <!--  Radio buttons for search type -->
       <form class="d-flex align-items-center text-white me-3">
-        <label class="me-2">Search by:</label>
+        <!-- <span class="search-label" @click="onSearchByClick">
+          Search By
+        </span> -->
+        <!-- <label class="me-2">Search by:</label> -->
         <div class="form-check form-check-inline text-white">
-          <input class="form-check-input" type="radio" id="searchUser" value="user" v-model="searchType" />
+          <input v-model="searchStore.searchValue" />
+        </div>
+        <div class="form-check form-check-inline text-white">
+          <input class="form-check-input" type="radio" id="searchUser" value="user" v-model="searchStore.searchType" />
           <label class="form-check-label" for="searchUser">User</label>
         </div>
         <div class="form-check form-check-inline text-white">
           <input class="form-check-input" type="radio" id="searchReservation" value="reservation"
-            v-model="searchType" />
+            v-model="searchStore.searchType" />
           <label class="form-check-label" for="searchReservation">Reservation</label>
         </div>
         <div class="form-check form-check-inline text-white">
-          <input class="form-check-input" type="radio" id="searchLot" value="lot" v-model="searchType" />
+          <input class="form-check-input" type="radio" id="searchLot" value="lot" v-model="searchStore.searchType" />
           <label class="form-check-label" for="searchLot">Lot</label>
         </div>
       </form>
@@ -86,9 +92,12 @@ import { useRouter } from "vue-router";
 import { useAuth } from "../stores/auth";
 import { useSearchStore } from "../stores/search";
 import { apiFetch } from "@/api";
+import { watch } from "vue";
+
 
 const { isLoggedIn, isAdmin, logout } = useAuth();
 const searchStore = useSearchStore();
+// const searchType = searchStore.searchType;
 const router = useRouter();
 
 const welcomeText = computed(() => {
@@ -102,7 +111,22 @@ console.log("Navbar - msg:", welcomeText.value);
 console.log("Navbar - isLoggedIn:", isLoggedIn.value);
 console.log("Navbar - isAdmin:", isAdmin.value);
 
-
+watch(
+  () => searchStore.searchType,
+  (newVal) => {
+    // console.log("Search type changed:", newVal);
+    // console.log("Search value :", searchStore.searchValue);
+    // console.log("searchStore.searchType value :", searchStore.searchType);
+    router.push("/search"); // navigate once type changes
+    searchStore.triggerNavbarAction();
+  }
+);
+function onSearchByClick() {
+  console.log("Navbar Clicked");
+  // console.log("Search value 2:", searchStore.searchValue);
+  console.log("searchStore.searchType value 2:", searchStore.searchType);
+  searchStore.triggerNavbarAction();
+}
 async function doLogout() {
   try {
     await apiFetch("/auth/logout", {

@@ -18,7 +18,7 @@ os.makedirs(INSTANCE_DIR, exist_ok=True)
 
 
 
-def create_app(use_redis = False, large_data = False):
+def create_app(use_redis = False, large_data = 0):
     load_dotenv()
     app = Flask(__name__, instance_relative_config=True)
 
@@ -26,7 +26,12 @@ def create_app(use_redis = False, large_data = False):
      resources={r"/*": {"origins": "http://localhost:5173"}},
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"])
-    data_base = 'vehicle_parking_large.db' if large_data else 'vehicle_parking.db'
+    if large_data == 2:
+        data_base ='vehicle_parking_large.db'
+    elif large_data == 1:
+        data_base ='vehicle_parking_medium.db'
+    else:
+        data_base = 'vehicle_parking.db'
     print("Starting with data base:  " +data_base)
 
 
@@ -100,8 +105,11 @@ if __name__ == "__main__":
     large_data = False
     if len(sys.argv) > 1 and sys.argv[1].lower() == "redis":
         use_redis = True
-    if len(sys.argv) > 2 and sys.argv[2].lower() == "l":
-        large_data = True
+    if len(sys.argv) > 2:
+        arg = sys.argv[2].lower()
+        large_data = int(arg) if arg.isdigit() else 0
+    else:
+        large_data = 0
     app = create_app(use_redis,large_data)
     port = int(os.environ.get("FLASK_PORT", 5000))
     app.run(debug=True, port=port)

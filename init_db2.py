@@ -7,7 +7,7 @@ from Others.reservations_data import reservations_data
 from backend.extensions import db, bcrypt  
 import random
 
-app = create_app(False,True)
+app = create_app(False,1)
 
 with app.app_context():
     db.drop_all()
@@ -19,7 +19,7 @@ with app.app_context():
     "Lakshmi", "Priya", "Rani", "Kavya", "Pooja", "Sneha", "Nisha", "Radha", "Divya", "Meera",
     "Rahul", "Amit", "Suresh", "Ramesh", "Vijay", "Karthik", "Sanjay", "Deepak", "Manoj", "Arvind",
     "Sunita", "Geeta", "Seema", "Lata", "Rekha", "Neha", "Shreya", "Aarti", "Payal", "Jyoti"
-    "Ram","Murugan","Chandran","Devika","Lakshmi"
+    "Ram","Murugan","Chandran","Devika"
     ]
 
     # Sample addresses in Indian cities
@@ -90,7 +90,7 @@ with app.app_context():
         address="123 Station Road, Egmore, Chennai",
         pin_code="600001",
         price=50,
-        max_slots=80
+        max_slots=25
     ),
     ParkingLot(
         name="Mall Parking Lot",
@@ -98,7 +98,7 @@ with app.app_context():
         address="456 Phoenix Market Road, Velachery, Chennai",
         pin_code="600042",
         price=40,
-        max_slots=150
+        max_slots=75
     ),
     ParkingLot(
         name="City Center",
@@ -106,7 +106,7 @@ with app.app_context():
         address="789 Brigade Road, MG Road, Bangalore",
         pin_code="560001",
         price=30,
-        max_slots=120
+        max_slots=50
     ),
     ParkingLot(
         name="Airport Parking",
@@ -114,7 +114,7 @@ with app.app_context():
         address="Near Terminal 1, IGI Airport, New Delhi",
         pin_code="110037",
         price=100,
-        max_slots=300
+        max_slots=100
     ),
     ParkingLot(
         name="Bus Stand Parking",
@@ -122,7 +122,7 @@ with app.app_context():
         address="Majestic Bus Stand, Kempegowda, Bangalore",
         pin_code="560009",
         price=25,
-        max_slots=200
+        max_slots=25
     ),
     ParkingLot(
         name="Tech Park Parking",
@@ -130,7 +130,7 @@ with app.app_context():
         address="Outer Ring Road, Whitefield, Bangalore",
         pin_code="560066",
         price=35,
-        max_slots=250
+        max_slots=50
     ),
     ParkingLot(
         name="Old City Market",
@@ -138,7 +138,7 @@ with app.app_context():
         address="Charminar Market Road, Hyderabad",
         pin_code="500002",
         price=20,
-        max_slots=100
+        max_slots=40
     ),
     ParkingLot(
         name="Beachside Parking",
@@ -146,7 +146,7 @@ with app.app_context():
         address="Marina Beach Road, Chennai",
         pin_code="600005",
         price=30,
-        max_slots=180
+        max_slots=75
     ),
     ParkingLot(
         name="Shopping Complex",
@@ -154,7 +154,7 @@ with app.app_context():
         address="MG Road, Pune",
         pin_code="411001",
         price=40,
-        max_slots=140
+        max_slots=40
     ),
     ParkingLot(
         name="Sports Stadium Parking",
@@ -162,7 +162,7 @@ with app.app_context():
         address="Eden Gardens Stadium, Kolkata",
         pin_code="700021",
         price=60,
-        max_slots=300
+        max_slots=50
     ),
     ParkingLot(
         name="College Campus",
@@ -170,7 +170,7 @@ with app.app_context():
         address="Delhi University North Campus, Delhi",
         pin_code="110007",
         price=15,
-        max_slots=120
+        max_slots=10
     ),
     ParkingLot(
         name="Hospital Parking",
@@ -178,7 +178,7 @@ with app.app_context():
         address="AIIMS Main Road, Ansari Nagar, Delhi",
         pin_code="110029",
         price=25,
-        max_slots=180
+        max_slots=40
     ),
     ParkingLot(
         name="Zoo Parking",
@@ -186,7 +186,7 @@ with app.app_context():
         address="Nehru Zoological Park, Bahadurpura, Hyderabad",
         pin_code="500064",
         price=20,
-        max_slots=90
+        max_slots=10
     ),
     ParkingLot(
         name="IT Hub Parking",
@@ -194,7 +194,7 @@ with app.app_context():
         address="Hitech City, Madhapur, Hyderabad",
         pin_code="500081",
         price=35,
-        max_slots=220
+        max_slots=40
     ),
     ParkingLot(
         name="Fort Parking",
@@ -202,7 +202,7 @@ with app.app_context():
         address="Red Fort Road, Chandni Chowk, Delhi",
         pin_code="110006",
         price=30,
-        max_slots=150
+        max_slots=25
     ),
     ParkingLot(
         name="Cinema Hall Parking",
@@ -210,7 +210,7 @@ with app.app_context():
         address="INOX Theatre, Law College Road, Pune",
         pin_code="411004",
         price=20,
-        max_slots=100
+        max_slots=20
     ),
     ParkingLot(
         name="Temple Parking",
@@ -218,7 +218,7 @@ with app.app_context():
         address="Meenakshi Amman Temple, Madurai",
         pin_code="625001",
         price=15,
-        max_slots=80
+        max_slots=10
     ),
     ParkingLot(
         name="Exhibition Ground",
@@ -226,7 +226,7 @@ with app.app_context():
         address="Pragati Maidan, Mathura Road, Delhi",
         pin_code="110001",
         price=50,
-        max_slots=250
+        max_slots=40
     ),
     ParkingLot(
         name="Seaside Promenade",
@@ -234,7 +234,7 @@ with app.app_context():
         address="Promenade Beach Road, Puducherry",
         pin_code="605001",
         price=25,
-        max_slots=90
+        max_slots=10
     ),
     ParkingLot(
         name="Hill Station Parking",
@@ -242,7 +242,7 @@ with app.app_context():
         address="Mall Road, Shimla",
         pin_code="171001",
         price=30,
-        max_slots=60
+        max_slots=10
     )
     ]
 
@@ -372,7 +372,8 @@ with app.app_context():
     # Example car/driver pools
     state_codes = ["MH", "DL", "KA", "TN", "WB", "UP", "RJ", "GJ", "KL", "AP", "MP", "HR", "PB", "BR", "OD"]
 
-    NUM_CARS = 200
+    NUM_CARS = 100
+    drivers = drivers[:50]
     NUM_DRIVERS = len(drivers)
     car_numbers = []
 
@@ -486,7 +487,7 @@ with app.app_context():
 
         return reservations
 
-    reservations = generate_reservations(60)
+    reservations = generate_reservations(30)
     no_users = len(names)
     for r in reservations:
         res = Reservation(

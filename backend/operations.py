@@ -14,15 +14,7 @@ from backend.routes.utils.auth import auth_required , admin_required
 from backend.services.parking_service import get_all_lots
 
 
-
-
-
-admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
-
-
 # Create parking lot
-@admin_bp.route("/lots", methods=["POST"])
-@admin_required
 def create_lot():
     data = request.json
     lot = ParkingLot(
@@ -47,27 +39,23 @@ def create_lot():
     return jsonify({"message": "Parking lot created", "id": lot.id}), 201
 
 # Get all parking lots with their spots
-@admin_bp.route("/lots", methods=["GET"])
-@admin_required
+
 def list_lots():
     return get_all_lots(), 200
 
 # View all users
-@admin_bp.route("/users", methods=["GET"])
-@admin_required
+
 def list_users():
     users = User.query.all()
     return jsonify([{"id": u.id, "email": u.email,
                      "name": u.name, "mobile": u.mobile,
-                     "address": u.address, "rev" : u.billing ,"is_blocked": u.is_admin < 0  } for u in users])
+                     "address": u.address, "is_blocked": u.is_admin < 0  } for u in users])
 
-@admin_bp.route("/search/asd", methods=["GET"])
-@admin_required
+
 def search_bookings():
     res = Reservation
 
-@admin_bp.route("/search", methods=["GET"])
-@admin_required
+
 def search_users():
     query = request.args.get("query", "").strip()
     if not query:
@@ -85,8 +73,7 @@ def search_users():
     ])
 
 # Delete parking slot
-@admin_bp.route("/slots/<int:slot_id>", methods=["DELETE"])
-@admin_required
+
 def delete_parking_slot(slot_id):
     slot = ParkingSpot.query.get_or_404(int(slot_id))
     if slot.status == "O":
@@ -99,8 +86,7 @@ def delete_parking_slot(slot_id):
     return jsonify({"message": "Parking slot deleted"}), 200
 
 # Update parking lot
-@admin_bp.route("/lots/<int:lot_id>", methods=["PUT"])
-@admin_required
+
 def update_parking_lot(lot_id):
     lot = ParkingLot.query.get_or_404(lot_id)
     data = request.get_json()
@@ -119,8 +105,7 @@ def update_parking_lot(lot_id):
     return jsonify({"message": "Parking lot updated"}), 200
 
 # Delete parking lot
-@admin_bp.route("/lots/<int:lot_id>", methods=["DELETE"])
-@admin_required
+
 def delete_parking_lot(lot_id):
     lot = db.session.get(ParkingLot, lot_id)
     if not lot:
@@ -135,9 +120,6 @@ def delete_parking_lot(lot_id):
     return jsonify({"message": "Lot deleted"}), 200
 
 
-
-@admin_bp.route("/summary", methods=["GET"])
-@admin_required
 def summary():
     total_users = User.query.count()
     # blocked_users = User.query.filter_by(is_blocked=True).count()
@@ -167,8 +149,7 @@ def summary():
         "revenue": revenue_data
     })
 
-@admin_bp.route("/reservations", methods=["GET"])
-@admin_required
+
 def list_reservations():
     reservations = Reservation.query.all()
     return jsonify([
@@ -185,12 +166,10 @@ def list_reservations():
         for r in reservations
     ])
 
-@admin_bp.route("/search/users", methods=["GET"])
-@admin_required
 def search_users_admin():
     search_by = request.args.get("search_by")
     value = request.args.get("value")
-    print(search_by , value)
+
     query = User.query
     if search_by == "name":
         query = query.filter(User.name.ilike(f"%{value}%"))
@@ -210,13 +189,10 @@ def search_users_admin():
         query = query.join(Reservation).filter(Reservation.driver_name.ilike(f"%{value}%"))
     elif search_by == "parking_lot":
         query = query.join(Reservation).join(ParkingSpot).join(ParkingLot).filter(ParkingLot.name.ilike(f"%{value}%"))
-    else:
-        query = query
 
     return jsonify([u.to_dict() for u in query.all()])
 
-@admin_bp.route("/search/bookings", methods=["GET"])
-@admin_required
+
 def search_bookings_admin():
     search_by = request.args.get("search_by")
     value = request.args.get("value")
@@ -235,16 +211,9 @@ def search_bookings_admin():
     elif search_by == "parking_lot":
         query = query.join(ParkingSpot).join(ParkingLot).filter(ParkingLot.name.ilike(f"%{value}%"))
 
-    return jsonify([r.get_details for r in query.all()])
-
-@admin_bp.route("/search/lots", methods=["GET"])
-@admin_required
-def search_lots():
-    return get_all_lots(), 200
+    return jsonify([r.to_dict() for r in query.all()])
 
 
-@admin_bp.route("/reports/occupancy", methods=["GET"])
-@admin_required
 def occupancy_report():
     lots = ParkingLot.query.all()
     data = []
@@ -259,7 +228,7 @@ def occupancy_report():
     return jsonify(data)
 
 
-@admin_bp.route("/reports/revenue" , methods =["GET"])
+
 def revenue_report():
     # revenue trend: group by month + lot
     results = (
@@ -281,7 +250,7 @@ def revenue_report():
         data[lot][int(month)] = float(revenue or 0)
     return jsonify(data)
 
-@admin_bp.route("/reports/reservations", methods =["GET"])
+
 def reservation_report():
     results = (
         db.session.query(
@@ -296,7 +265,7 @@ def reservation_report():
     data = [{"lot": lot, "bookings": bookings} for lot, bookings in results]
     return jsonify(data)
 
-@admin_bp.route("/reports/pdf", methods=["POST"])
+
 def generate_pdf():
     data = request.get_json()
     charts = data.get("charts", [])

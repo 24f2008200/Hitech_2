@@ -236,7 +236,7 @@ def search_bookings_admin():
     return jsonify([r.to_dict() for r in query.all()])
 
 @admin_bp.route("/reports/occupancy", methods=["GET"])
-
+@admin_required
 def occupancy_report():
     lots = ParkingLot.query.all()
     data = []
