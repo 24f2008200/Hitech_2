@@ -96,7 +96,7 @@ onMounted(async () => {
     }
 
     // Revenue trend (per lot per month)
-    const revRes = await fetch("http://localhost:5000/admin/reports/revenue").then(r => r.json())
+    const revRes = await apiFetch("/admin/reports/revenue").then(r => r.json())
     const months = Array.from({ length: 12 }, (_, i) => i + 1)
     revenueData.value = {
         labels: months,
@@ -109,7 +109,7 @@ onMounted(async () => {
     }
 
     // Reservation activity
-    const resRes = await fetch("http://localhost:5000/admin/reports/reservations").then(r => r.json())
+    const resRes = await apiFetch("/admin/reports/reservations").then(r => r.json())
     reservationData.value = {
         labels: resRes.map(r => r.lot),
         datasets: [

@@ -17,7 +17,7 @@ export const useSearchStore = defineStore("search", () => {
   }
 
   function setNavbarAction(actionFn) {
-    console.log("Navbar action registered");
+
     navbarAction.value = actionFn;
   }
 
@@ -25,7 +25,7 @@ export const useSearchStore = defineStore("search", () => {
     if (navbarAction.value) {
       navbarAction.value();
     } else {
-      console.log("No navbar action registered");
+
     }
   }
 

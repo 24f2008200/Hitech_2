@@ -154,6 +154,16 @@ def list_pin_codes():
     pin_codes = db.session.query(ParkingLot.pin_code).distinct().all()
     return jsonify([p[0] for p in pin_codes]), 200  
 
+@user_bp.route("/profile/<int:user_id>", methods=["GET"])
+@auth_required
+def getProfile(user_id):
+    user = User.query.get_or_404(int(user_id))
+    return jsonify(user.to_dict())
+
+
+
+
+
 @user_bp.route("/register", methods=["POST"])
 def register():
     data = request.get_json()

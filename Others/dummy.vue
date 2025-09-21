@@ -1,64 +1,61 @@
-<script setup>
-import { ref } from "vue";
-import { apiFetch } from "../api";
-import { useSearchStore } from "../stores/search";  
+<script>
+async function fetchProfile() {
+  try {
+    const token = localStorage.getItem('access_token')
+    const res = await fetch('/api/user/profile', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
 
+    if (!res.ok) throw new Error('Failed to load profile')
 
-const searchBy = ref("");
-const searchValue = ref("");
-const results = ref([]);
-const searched = ref(false);
-const tableHeaders = ref([]);
+    const data = await res.json()
+    Object.assign(profile, data)
+  } catch (err) {
+    console.error('fetchProfile error', err)
+    serverError.value = err.message
+  }
+}
 
+async function submit() {
+  if (!validate()) return
 
-const searchStore = useSearchStore();
-const searchType = searchStore.searchType; // reactive
-
-
-async function performSearch() {
-  if (!searchBy.value || !searchValue.value) {
-    alert("Please select search by and enter a value.");
-    return;
+  const payload = buildPayload()
+  if (Object.keys(payload).length === 0) {
+    successMsg.value = 'No changes to save.'
+    return
   }
 
+  saving.value = true
+  serverError.value = ''
+  successMsg.value = ''
+
   try {
-    // Decide endpoint based on global searchType
-    const endpoint =
-      searchType === "user"
-        ? "/admin/search/users"
-        : searchType === "reservation"
-        ? "/admin/search/bookings"
-        : "/admin/search/lots";
-
-    const url = `${endpoint}?search_by=${searchBy.value}&value=${encodeURIComponent(
-      searchValue.value
-    )}`;
-
-    const response = await apiFetch(url, {
-      method: "GET",
+    const token = localStorage.getItem('access_token')
+    const res = await fetch('/api/user/profile', {
+      method: 'PUT',
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
       },
-    });
+      body: JSON.stringify(payload)
+    })
 
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      throw new Error(data.message || 'Failed to update profile')
     }
 
-    const data = await response.json();
-    results.value = data;
-    searched.value = true;
-
-    if (results.value.length > 0) {
-      tableHeaders.value = Object.keys(results.value[0]);
-    } else {
-      tableHeaders.value = [];
-    }
-  } catch (error) {
-    console.error("Search error:", error);
-    alert("Error fetching search results.");
+    const data = await res.json()
+    Object.assign(profile, data)
+    successMsg.value = 'Profile updated successfully.'
+    editing.value = false
+  } catch (err) {
+    console.error('save profile error', err)
+    serverError.value = err.message
+  } finally {
+    saving.value = false
+    form.password = ''
+    form.confirm_password = ''
   }
 }
 </script>
-

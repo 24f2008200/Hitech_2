@@ -121,8 +121,8 @@ const reservationColumns = [
   { key: "lot_prefix", label: "ID" ,filterType :"select" ,type: "noedit" },
   { key: "spot_id", label: "Location" , type: "noedit" },
   { key: "vehicle_number", label: "Vehicle No" , type: "text" },
-  { key: "start_time", label: "From" , type: "date" },
-  { key: "end_time", label: "To" , type: "date" },
+  { key: "start_time", label: "From" , type: "text" },
+  { key: "end_time", label: "To" , type: "text" },
   { key: "driver_name", label: "Driver Name" , type: "text" },
   { key: "driver_contact", label: "Driver Contact" },
    { key: "status", label: "Action"  }
@@ -135,7 +135,7 @@ const pinCodes = ref([]);
 const selectedPin = ref("");
 const lots = ref([]);
 const currentUser = JSON.parse(localStorage.getItem("current_user", '{"name": "User"}'));
-const f_date = (raw) => raw ? new Date(raw).toLocaleString() : '';
+const f_date = (raw) => raw ;
 // state for modal + form
 const selectedLot = ref(null);
 const bookingModal = ref(null);
@@ -187,16 +187,16 @@ async function confirmBooking() {
 // Fetch recent reservations
 async function fetchReservations() {
   const res = await apiFetch("/user/reservations", {
+    doDateConversion : true,
     headers: { Authorization: `Bearer ${token.value}` },
   });
-  if (res.ok) {
-    reservations.value = await res.json();
-  }
+  // if (res.ok) {
+    reservations.value = await res;
+  // }
 }
 
 // Release a spot
 async function releaseSpot(reservationId) {
-  console.log("Released")
   const res = await apiFetch(`/user/release/${reservationId}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token.value}` },

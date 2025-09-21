@@ -77,7 +77,6 @@ function parseDateTime(val) {
 }
 watchEffect(() => {
   const newRow = props.row
-  console.log("Hi")
   if (!newRow) return
   Object.assign(localRow, newRow)
   props.fields.forEach(f => {
@@ -88,24 +87,6 @@ watchEffect(() => {
     }
   })
 })
-
-// watch(
-//   () => props.row,
-//   (newRow) => {console.log("Hi")
-//     if (!newRow) return
-//     Object.assign(localRow, newRow)
-
-//     props.fields.forEach(f => {
-//       if (f.type === "datetime" && newRow[f.key]) {
-//         const { date, time } = parseDateTime(newRow[f.key])
-//         localRow[f.key + "_date"] = date
-//         localRow[f.key + "_time"] = time
-//         console.log(date, " and ", time)
-//       }
-//     })
-//   },
-//   { immediate: true, deep: true }
-// )
 
 function onSave() {
   const output = { ...localRow }

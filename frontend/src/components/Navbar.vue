@@ -4,7 +4,6 @@
       {{ welcomeText }}
     </span>
 
-
     <!-- Public Navbar -->
     <template v-if="!isLoggedIn">
       <ul class="navbar-nav me-auto">
@@ -75,7 +74,8 @@
     <!-- Shared links -->
     <ul class="navbar-nav">
       <li class="nav-item">
-        <RouterLink class="nav-link" to="/profile">Edit Profile</RouterLink>
+        <!-- <RouterLink class="nav-link" to="/profile">Edit Profile</RouterLink> -->
+        <button class="btn btn-outline-primary btn-sm" @click="openProfile">Profile</button>
       </li>
       <li class="nav-item">
         <button class="btn btn-sm btn-outline-light ms-2" @click="doLogout">
@@ -84,18 +84,29 @@
       </li>
     </ul>
   </nav>
+  <div >
+    <UserProfileModal :userId="userId" :currentUserIsAdmin="currentUserIsAdmin" :show="show" @closed="show = false">
+    </UserProfileModal>
+  </div>
+
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuth } from "../stores/auth";
 import { useSearchStore } from "../stores/search";
 import { apiFetch } from "@/api";
 import { watch } from "vue";
+import UserProfileModal from '../components/UserProfileModal.vue';
 
 
 const { isLoggedIn, isAdmin, logout } = useAuth();
+
+const userId = ref();
+const show = ref(false);
+let currentUserIsAdmin = ref(false);
+
 const searchStore = useSearchStore();
 // const searchType = searchStore.searchType;
 const router = useRouter();
@@ -107,24 +118,21 @@ const welcomeText = computed(() => {
   return isAdmin.value ? "Welcome to Admin" : "Welcome to User"
 })
 
-console.log("Navbar - msg:", welcomeText.value);
-console.log("Navbar - isLoggedIn:", isLoggedIn.value);
-console.log("Navbar - isAdmin:", isAdmin.value);
-
 watch(
   () => searchStore.searchType,
   (newVal) => {
-    // console.log("Search type changed:", newVal);
-    // console.log("Search value :", searchStore.searchValue);
-    // console.log("searchStore.searchType value :", searchStore.searchType);
     router.push("/search"); // navigate once type changes
     searchStore.triggerNavbarAction();
   }
 );
+function openProfile() {
+  const { isAdmin, userName, userId: uid } = useAuth()
+  userId.value = parseInt(uid.value)
+  currentUserIsAdmin.value = isAdmin.value
+  show.value = true
+
+}
 function onSearchByClick() {
-  console.log("Navbar Clicked");
-  // console.log("Search value 2:", searchStore.searchValue);
-  console.log("searchStore.searchType value 2:", searchStore.searchType);
   searchStore.triggerNavbarAction();
 }
 async function doLogout() {

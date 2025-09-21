@@ -21,12 +21,6 @@
                             class="form-control" />
                         <input v-else-if="field.type === 'email'" v-model.number="localRow[field.key]" type="email"
                             class="form-control" />
-                        <!-- Datetime split into date + time -->
-                        <input v-else-if="field.type === 'date'" v-model="localRow[field.key]"  type="text"
-                            class="form-control" />
-                        <input v-else-if="field.type === 'time'" v-model="localRow[field.key]" type="time"
-                            class="form-control" />
-
                         <select v-else-if="field.type === 'select'" v-model="localRow[field.key]" class="form-select">
                             <option v-for="opt in field.options" :key="opt" :value="opt">
                                 {{ opt }}
@@ -50,17 +44,21 @@
 </template>
 
 <script setup>
-import { reactive, watch, watchEffect ,computed } from "vue"
+import { reactive, watch, watchEffect, computed } from "vue"
 
 const props = defineProps({
     row: { type: Object, required: true },   // initial row
     fields: { type: Array, required: true }, // list of fields with { key, label, type, options? }
-    title: { type: String, default: "Edit Record" }
+    title: { type: String, default: "Edit Record" },
+    localRow: Object,
+    field: Object
 })
+
+
 
 const emit = defineEmits(["save", "cancel"])
 const localRow = reactive({ ...props.row })
-const f_date = (raw) => raw ? new Date(raw).toLocaleString() : '';
+
 function parseDateTime(val) {
     if (!val) return { date: "", time: "" }
     const d = new Date(val)
@@ -77,16 +75,10 @@ function parseDateTime(val) {
         time: `${hh}:${min}`
     }
 }
-const formattedDate = computed({
-  get: () => f_date(localRow[field.key]),
-  set: (val) => {
-    // parse back if user edits
-    localRow.date = new Date(val).toISOString();
-  },
-});
+
 watchEffect(() => {
     const newRow = props.row
-    console.log("Hi")
+
     if (!newRow) return
     Object.assign(localRow, newRow)
     props.fields.forEach(f => {
@@ -98,23 +90,7 @@ watchEffect(() => {
     })
 })
 
-// watch(
-//   () => props.row,
-//   (newRow) => {console.log("Hi")
-//     if (!newRow) return
-//     Object.assign(localRow, newRow)
 
-//     props.fields.forEach(f => {
-//       if (f.type === "datetime" && newRow[f.key]) {
-//         const { date, time } = parseDateTime(newRow[f.key])
-//         localRow[f.key + "_date"] = date
-//         localRow[f.key + "_time"] = time
-//         console.log(date, " and ", time)
-//       }
-//     })
-//   },
-//   { immediate: true, deep: true }
-// )
 
 function onSave() {
     const output = { ...localRow }

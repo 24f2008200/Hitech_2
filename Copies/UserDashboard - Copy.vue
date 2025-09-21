@@ -130,14 +130,14 @@ import { useAuth } from "../stores/auth";
 import * as bootstrap from "bootstrap";
 import { apiFetch } from "@/api";
 
-const { token } = useAuth();
+const { token ,userName } = useAuth();
 
 // State
 const reservations = ref([]);
 const pinCodes = ref([]);
 const selectedPin = ref("");
 const lots = ref([]);
-const currentUser = JSON.parse(localStorage.getItem("current_user" , '{"name": "User"}'));
+const currentUser = userName;
 const f = (raw) => new Date(raw).toLocaleString();
 // state for modal + form
 const selectedLot = ref(null);

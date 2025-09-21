@@ -40,11 +40,11 @@ async function doLogin() {
       }),
     });
 
-    console.log("Raw response:", res);
+
 
     // Try parsing JSON safely
     const data = await res.json().catch(() => null);
-    console.log("Parsed data:", data);
+
 
     if (!res.ok) {
       error.value = data?.message || "Invalid login credentials";

@@ -45,8 +45,8 @@ const reservationCols = [
   { key: "label", label: "Spot", type: "text" },
   { key: "user_name", label: "User", type: "text" },
   { key: "vehicle_number", label: "Vechile", type: "text" },
-  { key: "start_time", label: "From", type: "date" },
-  { key: "end_times", label: "To", type: "date" },
+  { key: "start_time", label: "From", type: "text" },
+  { key: "end_times", label: "To", type: "text" },
   { key: "driver_name", label: "Driver", type: "text" },
   { key: "driver_contact", label: "Contact", type: "number" },
   { key: "total_earnings", label: "Revenue", type: "number" },
@@ -75,28 +75,15 @@ const title = searchStore.searchType === 'user' ? 'User' : searchStore.searchTyp
 const f_date = (raw) => raw ? new Date(raw).toLocaleString() : '';
 onMounted(() => {
   // Register this page’s action
-  console.log("Attempting Navbar action registered");
   searchStore.setNavbarAction(performSearch);
   performSearch();
 })
 
 onUnmounted(() => {
   // Clean up when leaving page
-  console.log("Attempting Navbar action removed");
   searchStore.setNavbarAction(null)
 })
-async function rowClicked() {
-  const searchType = searchStore.searchType; // reactive
-  const searchValue = searchStore.searchValue;
-  if (searchType === 'user') {
-    console.log("Attempting user");
-  } else if (searchType === 'lot') {
-    console.log("Attempting lot");
-  } else if (searchType === 'reservation') {
-    console.log("Attempting reservation");
-  }
 
-}
 const editingRow = ref(null)
 const editorTitle = ref("")
 const editorFields = ref([])
@@ -107,20 +94,16 @@ function handleAction({ action, id, row }) {
   const searchType = searchStore.searchType; // reactive
   const searchValue = searchStore.searchValue;
   if (searchType === 'user') {
-    console.log("Attempting user");
     editorTitle.value = "Edit Parking Lot"
     editorFields.value = userCols
   } else if (searchType === 'lot') {
-    console.log("Attempting lot");
     editorTitle.value = "Edit  Lot"
     editorFields.value = lotCols
   } else if (searchType === 'reservation') {
-    console.log("Attempting reservation");
     editorTitle.value = "Edit Reservation"
     editorFields.value = reservationCols
   }
   if (action === "edit") {
-    console.log("Edit row:", id, row)
     editingRow.value = { ...row }
     // editorTitle.value = "Edit Parking Lot"
     // editorFields.value = userCols
@@ -128,7 +111,6 @@ function handleAction({ action, id, row }) {
   }
 }
 function saveChanges(updatedRow) {
-  console.log(updatedRow)
   // Replace row in rows
   const idx = results.value.findIndex(r => r.id === updatedRow.id)
   if (idx !== -1) results.value[idx] = updatedRow
@@ -152,8 +134,7 @@ function closeModal() {
 async function performSearch() {
   const searchType = searchStore.searchType; // reactive
   const searchValue = searchStore.searchValue;
-  console.log("sperformSearch earch bar searchType", searchType)
-  // console.log("performSearch search bar searchValue", searchValue)
+
   if (!searchType) {
     alert("Please select search by and enter a value.")
     return
@@ -171,20 +152,20 @@ async function performSearch() {
     const url = `${endpoint}?search_by=${searchType}&value=${encodeURIComponent(
       searchValue
     )}`;
-    console.log("search bar url", url)
     const response = await apiFetch(url, {
       method: "GET",
+      doDateConversion : true,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
       },
     });
 
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
+    // if (!response.ok) {
+    //   throw new Error("Network response was not ok");
+    // }
 
-    const data = await response.json();
+    const data = await response;
     results.value = data;
     searched.value = true;
 

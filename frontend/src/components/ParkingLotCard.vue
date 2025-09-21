@@ -43,17 +43,14 @@ const emit = defineEmits(["edit-lot", "delete-lot", "slot-click"]);
 
 // Methods
 function openEditModal(lot) {
-  console.log("Child emitting edit-lot:", lot);
   emit("edit-lot", lot);
 }
 
 function deleteLot(id) {
-  console.log("Child emitting delete-lot:", id);
   emit("delete-lot", id);
 }
 
 function clickSlot(slot) {
-  console.log("Child emitting slot-click:", props.lot);
   emit("slot-click", slot, props.lot);
 }
 </script>

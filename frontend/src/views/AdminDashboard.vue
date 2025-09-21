@@ -116,7 +116,6 @@ export default {
       }
     },
     showSlotDetails(slot, lot) {
-      console.log("Slot clicked:", slot)
       this.selectedSlot = slot
       this.selectedLot = lot
       this.isModalOpen = true

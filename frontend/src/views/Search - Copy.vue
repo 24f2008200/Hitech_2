@@ -74,28 +74,17 @@ const title = searchStore.searchType === 'user' ? 'User' : searchStore.searchTyp
 const f_date = (raw) => raw ? new Date(raw).toLocaleString() : '';
 onMounted(() => {
   // Register this page’s action
-  console.log("Attempting Navbar action registered");
+
   searchStore.setNavbarAction(performSearch);
   performSearch();
 })
 
 onUnmounted(() => {
   // Clean up when leaving page
-  console.log("Attempting Navbar action removed");
+
   searchStore.setNavbarAction(null)
 })
-async function rowClicked() {
-  const searchType = searchStore.searchType; // reactive
-  const searchValue = searchStore.searchValue;
-  if (searchType === 'user') {
-    console.log("Attempting user");
-  } else if (searchType === 'lot') {
-    console.log("Attempting lot");
-  } else if (searchType === 'reservation') {
-    console.log("Attempting reservation");
-  }
 
-}
 const editingRow = ref(null)
 const editorTitle = ref("")
 const editorFields = ref([])
@@ -157,7 +146,7 @@ async function performSearch() {
     alert("Please select search by and enter a value.")
     return
   }
-
+  console.log("search")
   try {
     // Decide endpoint based on global searchType
     const endpoint =
@@ -173,6 +162,7 @@ async function performSearch() {
     console.log("search bar url", url)
     const response = await apiFetch(url, {
       method: "GET",
+      doDateConversion : true,
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
@@ -182,8 +172,8 @@ async function performSearch() {
     if (!response.ok) {
       throw new Error("Network response was not ok");
     }
-
-    const data = await response.json();
+    // const data = await response.json();
+    const data = await response;
     results.value = data;
     searched.value = true;
 
