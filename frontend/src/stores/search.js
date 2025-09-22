@@ -6,7 +6,7 @@ export const useSearchStore = defineStore("search", () => {
   const searchType = ref("user");     // default
   const searchValue = ref("");   // default
   const navbarAction = ref(null);     // will hold a function
-
+  const searchAction = ref(null);
   // actions
   function setSearchType(type) {
     searchType.value = type;
@@ -14,6 +14,11 @@ export const useSearchStore = defineStore("search", () => {
 
   function setSearchValue(nValue) {
     searchValue.value = nValue;
+  }
+
+  function setFetchAction(nValue) {
+
+    searchAction.value = nValue;
   }
 
   function setNavbarAction(actionFn) {
@@ -28,6 +33,13 @@ export const useSearchStore = defineStore("search", () => {
 
     }
   }
+  function triggerSearchAction() {
+    if (searchAction.value) {
+      searchAction.value();
+    } else {
+
+    }
+  }
 
   // expose
   return {
@@ -37,6 +49,8 @@ export const useSearchStore = defineStore("search", () => {
     setSearchType,
     setSearchValue,
     setNavbarAction,
-    triggerNavbarAction
+    setFetchAction,
+    triggerNavbarAction,
+    triggerSearchAction
   };
 });

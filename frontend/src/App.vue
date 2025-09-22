@@ -1,7 +1,8 @@
 <template>
   <div>
     <Navbar />
-    <div class="container mt-4">
+    <!-- <div class="container mt-4"> -->
+      <div class="container-fluid mt-4">
       <router-view />
     </div>
   </div>

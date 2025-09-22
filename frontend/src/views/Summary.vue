@@ -1,5 +1,5 @@
 <template>
-  <div class="container mt-4">
+  <div class="container-fluid mt-4">
     <h2>Summary Reports</h2>
 
     <div class="row text-center mb-4">

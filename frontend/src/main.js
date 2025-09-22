@@ -10,6 +10,8 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js"
 
 const app = createApp(App);
 
+app.config.devtools = true 
+
 app.use(createPinia());  
 app.use(router);
 

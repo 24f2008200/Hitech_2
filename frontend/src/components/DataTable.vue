@@ -59,7 +59,7 @@ const props = defineProps({
   rows: { type: Array, required: true },
   enableFilters: { type: Boolean, default: true }
 })
-
+ 
 // reactive filters
 const filters = ref({})
 

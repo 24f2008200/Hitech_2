@@ -187,11 +187,11 @@ async function confirmBooking() {
 // Fetch recent reservations
 async function fetchReservations() {
   const res = await apiFetch("/user/reservations", {
-    doDateConversion : true,
+    // doDateConversion : true,
     headers: { Authorization: `Bearer ${token.value}` },
   });
   // if (res.ok) {
-    reservations.value = await res;
+    reservations.value = await res.json();
   // }
 }
 
