@@ -125,6 +125,7 @@ const reservationColumns = [
   { key: "end_time", label: "To" , type: "text" },
   { key: "driver_name", label: "Driver Name" , type: "text" },
   { key: "driver_contact", label: "Driver Contact" },
+  { key: "cost", label: "Fee", type: "number" },
    { key: "status", label: "Action"  }
 ];
 
@@ -159,7 +160,7 @@ async function confirmBooking() {
   if (!selectedLot.value) return;
   form.value.user_name = currentUser.name;
   form.value.user_id = currentUser.id;
-  const res = await apiFetch("/user/book", {
+  const res = await apiFetch("/api/user/book", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -184,9 +185,10 @@ async function confirmBooking() {
     alert("Failed to book slot");
   }
 }
+
 // Fetch recent reservations
 async function fetchReservations() {
-  const res = await apiFetch("/user/reservations", {
+  const res = await apiFetch("/api/user/reservations", {
     // doDateConversion : true,
     headers: { Authorization: `Bearer ${token.value}` },
   });
@@ -197,7 +199,7 @@ async function fetchReservations() {
 
 // Release a spot
 async function releaseSpot(reservationId) {
-  const res = await apiFetch(`/user/release/${reservationId}`, {
+  const res = await apiFetch(`/api/user/release/${reservationId}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token.value}` },
   });
@@ -211,7 +213,7 @@ async function releaseSpot(reservationId) {
 
 // Fetch pin codes
 async function fetchPinCodes() {
-  const res = await apiFetch("/user/pincodes", {
+  const res = await apiFetch("/api/user/pincodes", {
     headers: { Authorization: `Bearer ${token.value}` },
   });
   if (res.ok) {
@@ -222,7 +224,7 @@ async function fetchPinCodes() {
 // Fetch lots by pin code
 async function fetchLots() {
   if (!selectedPin.value) return;
-  const res = await apiFetch(`/user/lots?pin_code=${selectedPin.value}`, {
+  const res = await apiFetch(`/api/user/lots?pin_code=${selectedPin.value}`, {
     headers: { Authorization: `Bearer ${token.value}` },
   });
   if (res.ok) {

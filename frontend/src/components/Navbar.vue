@@ -9,7 +9,7 @@
       <template v-if="!isLoggedIn">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <RouterLink class="nav-link" to="/login">Login</RouterLink>
+            <RouterLink class="nav-link" to="/api/login">Login</RouterLink>
           </li>
           <li class="nav-item">
             <RouterLink class="nav-link" to="/register">Register</RouterLink>
@@ -21,10 +21,10 @@
       <template v-else-if="isAdmin">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <RouterLink class="nav-link" to="/admin">Home</RouterLink>
+            <RouterLink class="nav-link" to="/api/admin">Home</RouterLink>
           </li>
           <li class="nav-item">
-            <RouterLink class="nav-link" to="/admin/summary">Summary</RouterLink>
+            <RouterLink class="nav-link" to="/api/admin/summary">Summary</RouterLink>
           </li>
           <li class="nav-item d-flex align-items-center ms-3">
             <input class="form-check-input me-1" type="radio" id="searchUser" value="user"
@@ -74,13 +74,13 @@
       <template v-else>
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <RouterLink class="nav-link" to="/user">Home</RouterLink>
+            <RouterLink class="nav-link" to="/api/user">Home</RouterLink>
           </li>
           <li class="nav-item">
-            <RouterLink class="nav-link" to="/user/summary">Summary</RouterLink>
+            <RouterLink class="nav-link" to="/api/user/summary">Summary</RouterLink>
           </li>
 
-        </ul>
+        </ul> 
       </template>
 
       <!-- Shared links -->
@@ -135,7 +135,7 @@ const welcomeText = computed(() => {
 watch(
   () => searchStore.searchType,
   (newVal) => {
-    router.push("/users"); // navigate once type changes
+    router.push("/api/users"); // navigate once type changes
     searchStore.triggerNavbarAction();
   }
 );
@@ -159,7 +159,7 @@ const onSearch = () => {
 // }
 async function doLogout() {
   try {
-    await apiFetch("/auth/logout", {
+    await apiFetch("/api/auth/logout", {
       method: "POST",
       credentials: "include",
     });

@@ -155,8 +155,10 @@ function closeModal() {
   }
 }
 async function performSearch() {
-  const searchType = searchStore.searchType; // reactive
+  const searchType = searchStore.searchType; // reactive searchBy
   const searchValue = searchStore.searchValue;
+  const searchBy = searchStore.searchBy;
+
   title.value = searchType === 'user' ? 'User' : searchType === 'lot' ? 'Lot' : 'Reservation'
   if (!searchType) {
     alert("Please select search by and enter a value.")
@@ -167,10 +169,10 @@ async function performSearch() {
     // Decide endpoint based on global searchType
     const endpoint =
       searchType === "user"
-        ? "/admin/users"
+        ? "/api/admin/users"
         : searchType === "reservation"
-          ? "/admin/search/bookings"
-          : "/admin/search/lots";
+          ? `/api/admin/search?type=bookings&search_by=${searchBy}&value=${searchValue}`
+          : `/api/admin/search?type=lots&search_by=${searchBy}s&value=${searchValue}`;
 
     const url = `${endpoint}?search_by=${searchType}&value=${encodeURIComponent(
       searchValue
@@ -204,7 +206,7 @@ async function performSearch() {
 }
 // Release a spot
 async function showDetails(reservationId) {
-  const res = await apiFetch(`/user/release/${reservationId}`, {
+  const res = await apiFetch(`/api/user/release/${reservationId}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token.value}` },
   });

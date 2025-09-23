@@ -70,7 +70,7 @@ const summary = ref({});
 
 onMounted(async () => {
   // Lot-wise occupancy
-  const occRes = await apiFetch("/admin/reports/occupancy",{
+  const occRes = await apiFetch("/api/admin/reports/occupancy", {
     headers: { Authorization: `Bearer ${token.value}` }
   }).then(r => r.json())
   occupancyData.value = {
@@ -90,22 +90,52 @@ onMounted(async () => {
   }
 
   // Revenue trend (per lot per month)
-  const revRes = await apiFetch("/admin/reports/revenue",{
+  // const revRes = await apiFetch("/api/admin/reports/revenue",{
+  //   headers: { Authorization: `Bearer ${token.value}` }
+  // }).then(r => r.json())
+  // const months = Array.from({ length: 12 }, (_, i) => i + 1)
+  // revenueData.value = {
+  //   labels: months,
+  //   datasets: Object.keys(revRes).map((lot, idx) => ({
+  //     label: lot,
+  //     data: months.map(m => revRes[lot][m] || 0),
+  //     borderColor: `hsl(${idx * 70}, 70%, 50%)`,
+  //     fill: false
+  //   }))
+  // }
+  const revRes = await apiFetch("/api/admin/reports/revenue", {
     headers: { Authorization: `Bearer ${token.value}` }
   }).then(r => r.json())
-  const months = Array.from({ length: 12 }, (_, i) => i + 1)
+
+  // Month names (short form, you can use full names too)
+  const monthNames = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ]
+
+  // Get active range from backend
+  const start = revRes.range.start
+  const end = revRes.range.end
+
+  // Build months dynamically
+  const months = Array.from({ length: end - start + 1 }, (_, i) => start + i)
+
+  // Convert to labels with names
+  const labels = months.map(m => monthNames[m - 1])
+
+  // Prepare chart datasets
   revenueData.value = {
-    labels: months,
-    datasets: Object.keys(revRes).map((lot, idx) => ({
+    labels,
+    datasets: Object.keys(revRes.data).map((lot, idx) => ({
       label: lot,
-      data: months.map(m => revRes[lot][m] || 0),
+      data: months.map(m => revRes.data[lot][m] || 0),
       borderColor: `hsl(${idx * 70}, 70%, 50%)`,
       fill: false
     }))
   }
 
   // Reservation activity
-  const resRes = await apiFetch("/admin/reports/reservations" ,{
+  const resRes = await apiFetch("/api/admin/reports/reservations", {
     headers: { Authorization: `Bearer ${token.value}` }
   }).then(r => r.json())
   reservationData.value = {
@@ -118,7 +148,7 @@ onMounted(async () => {
       }
     ]
   }
-  const res = await apiFetch("/admin/summary", {
+  const res = await apiFetch("/api/admin/summary", {
     headers: { Authorization: `Bearer ${token.value}` }
   });
   if (res.ok) {
@@ -127,30 +157,30 @@ onMounted(async () => {
 
 })
 
-  const downloadReport = async () => {
-    const canvases = document.querySelectorAll("canvas")
-    const images = []
+const downloadReport = async () => {
+  const canvases = document.querySelectorAll("canvas")
+  const images = []
 
-    canvases.forEach((c, idx) => {
-      images.push({
-        name: `chart_${idx + 1}`,
-        data: c.toDataURL("image/png")  // Base64 PNG
-      })
+  canvases.forEach((c, idx) => {
+    images.push({
+      name: `chart_${idx + 1}`,
+      data: c.toDataURL("image/png")  // Base64 PNG
     })
+  })
 
-    const response = await apiFetch("/admin/reports/pdf", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token.value}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ charts: images })
-    })
+  const response = await apiFetch("/api/admin/reports/pdf", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token.value}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ charts: images })
+  })
 
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "Parking_Report.pdf"
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
+  const blob = await response.blob()
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = "Parking_Report.pdf"
+  a.click()
+  window.URL.revokeObjectURL(url)
+}
 
 </script>

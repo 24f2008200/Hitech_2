@@ -59,7 +59,7 @@ export default {
   methods: {
     async handleRegister() {
       try {
-        const response = await apiFetch("/user/register", {
+        const response = await apiFetch("/api/user/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(this.form)

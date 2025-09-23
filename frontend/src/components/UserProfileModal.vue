@@ -191,8 +191,8 @@ async function fetchUser() {
   try {
     const token = localStorage.getItem("access_token")
     const url = isSelf.value
-      ? `/user/profile/${props.userId}`
-      : `/user/profile/${props.userId}`
+      ? `/api/user/profile/${props.userId}`
+      : `/api/user/profile/${props.userId}`
     const res = await apiFetch(url, {
         method: "GET",
       headers: token ? { Authorization: `Bearer ${token}` } : {}
@@ -226,8 +226,8 @@ async function submit() {
   try {
     const token = localStorage.getItem("access_token")
     const url = isSelf.value
-      ? `/user/profile/${props.userId}`
-      : `/user/profile/${props.userId}`
+      ? `/api/user/profile/${props.userId}`
+      : `/api/user/profile/${props.userId}`
     const res = await apiFetch(url, {
       method: "PUT",
       headers: {

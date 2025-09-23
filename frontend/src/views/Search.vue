@@ -31,7 +31,7 @@ const resultColumns = [
   { key: "table", label: "Table", filterType: "select", type: "noedit" },
   { key: "row_id", label: "Row No", type: "noedit" },
   { key: "column", label: "Column No", type: "text" },
-  { key: "matched_value", label: "FrMatched Valueom", type: "text" },
+  { key: "matched_value", label: "Matched Value", type: "text" },
   // { key: "end_time", label: "To" , type: "text" },
   // { key: "driver_name", label: "Driver Name" , type: "text" },
   // { key: "driver_contact", label: "Driver Contact" },
@@ -68,8 +68,9 @@ onUnmounted(() => {
 // );
 
 async function fetchData() {
-  const q = searchStore.searchValue
-  const res = await apiFetch(`/admin/search/bquery?search_by=${q}`, {
+  const searchValue = searchStore.searchValue
+  const searchBy = searchStore.searchBy
+  const res = await apiFetch(`/api/admin/search?type=bquery&search_by=${searchBy}&value=${searchValue}`, {
     headers: { Authorization: `Bearer ${token.value}`, "Content-Type": "application/json" },
     method: "GET",
   });
@@ -79,7 +80,7 @@ async function fetchData() {
 }
 
 function handleAction() { }
-
+console.log("I am here")
 const downloadReport = async () => {
   const canvases = document.querySelectorAll("canvas")
   const images = []
@@ -91,7 +92,7 @@ const downloadReport = async () => {
     })
   })
 
-  const response = await apiFetch("/admin/reports/pdf", {
+  const response = await apiFetch("/api/admin/reports/pdf", {
     method: "POST",
     headers: { Authorization: `Bearer ${token.value}`, "Content-Type": "application/json" },
     body: JSON.stringify({ charts: images })

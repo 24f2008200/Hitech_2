@@ -69,7 +69,7 @@ const { token } = useAuth();
 const summary = ref({});
 
 async function fetchSummary() {
-    const res = await apiFetch("/admin/summary", {
+    const res = await apiFetch("/api/admin/summary", {
         headers: { Authorization: `Bearer ${token.value}` }
     });
     if (res.ok) {
@@ -78,7 +78,7 @@ async function fetchSummary() {
 }
 onMounted(async () => {
     // Lot-wise occupancy
-    const occRes = await apiFetch("/admin/reports/occupancy").then(r => r.json())
+    const occRes = await apiFetch("/api/admin/reports/occupancy").then(r => r.json())
     occupancyData.value = {
         labels: occRes.map(l => l.lot),
         datasets: [
@@ -96,7 +96,7 @@ onMounted(async () => {
     }
 
     // Revenue trend (per lot per month)
-    const revRes = await apiFetch("/admin/reports/revenue").then(r => r.json())
+    const revRes = await apiFetch("/api/admin/reports/revenue").then(r => r.json())
     const months = Array.from({ length: 12 }, (_, i) => i + 1)
     revenueData.value = {
         labels: months,
@@ -109,7 +109,7 @@ onMounted(async () => {
     }
 
     // Reservation activity
-    const resRes = await apiFetch("/admin/reports/reservations").then(r => r.json())
+    const resRes = await apiFetch("/api/admin/reports/reservations").then(r => r.json())
     reservationData.value = {
         labels: resRes.map(r => r.lot),
         datasets: [

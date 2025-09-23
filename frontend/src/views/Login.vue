@@ -30,7 +30,7 @@ const router = useRouter();
 
 async function doLogin() {
   try {
-    const res = await apiFetch("/auth/login", {
+    const res = await apiFetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include", // send cookies/session if backend sets them
@@ -57,9 +57,9 @@ async function doLogin() {
 
     // Redirect based on role
     if (data.user.is_admin) {
-      router.push("/admin");
+      router.push("/api/admin");
     } else {
-      router.push("/user");
+      router.push("/api/user");
     }
   } catch (err) {
     console.error("Login failed:", err);

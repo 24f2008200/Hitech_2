@@ -107,7 +107,7 @@ export default {
     async fetchLots() {
       const token = localStorage.getItem("access_token")
       try {
-        const res = await apiFetch("/admin/lots", {
+        const res = await apiFetch("/api/admin/lots", {
           headers: { "Authorization": `Bearer ${token}` }
         })
         this.lots = await res.json()
@@ -151,22 +151,22 @@ export default {
       const token = localStorage.getItem("access_token")
       let url, method
       if (this.isEdit) {
-        this.handleUpdates(`/admin/lots/${this.editId}`, "PUT", this.formLot)
+        this.handleUpdates(`/api/admin/lots/${this.editId}`, "PUT", this.formLot)
       } else {
-        this.handleUpdates("/admin/lots", "POST", this.formLot)
+        this.handleUpdates("/api/admin/lots", "POST", this.formLot)
       }
       this.closeModalAndRefresh()
     },
     async handleDeleteLot(id) {
       const token = localStorage.getItem("access_token")
       if (!confirm("Are you sure you want to delete this lot?")) return
-      this.handleUpdates(`/admin/lots/${id}`, "DELETE", null)
+      this.handleUpdates(`/api/admin/lots/${id}`, "DELETE", null)
     },
     async handleDeleteSlot(slot) {
       const token = localStorage.getItem("access_token")
       if (!confirm("Are you sure you want to delete this slot?")) return
       this.isModalOpen = false
-      this.handleUpdates(`/admin/slots/${slot.id}`, "DELETE", null)
+      this.handleUpdates(`/api/admin/slots/${slot.id}`, "DELETE", null)
     },
     async handleUpdates(url, method, data) {
       const token = localStorage.getItem("access_token")

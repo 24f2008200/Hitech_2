@@ -4,6 +4,7 @@ import { ref } from "vue";
 export const useSearchStore = defineStore("search", () => {
   // state
   const searchType = ref("user");     // default
+  const searchBy = ref("");
   const searchValue = ref("");   // default
   const navbarAction = ref(null);     // will hold a function
   const searchAction = ref(null);
@@ -44,8 +45,10 @@ export const useSearchStore = defineStore("search", () => {
   // expose
   return {
     searchType,
+    searchBy,
     searchValue,
     navbarAction,
+    searchAction,
     setSearchType,
     setSearchValue,
     setNavbarAction,
