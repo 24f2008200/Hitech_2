@@ -8,7 +8,7 @@ git add .
 
 git commit -m "Remove all tracked files"
 
-git remote add origin https://github.com/24f2008200/Hitech_2.git
+git remote add origin https://github.com/24f2008200/Hitech_1.git
 git remote -v
 
 git pull origin main --allow-unrelated-histories
@@ -20,7 +20,6 @@ git push -u origin main
 git push -u origin master
 
 git branch   ==== to find branch name ?
-
 
 
 See commit history
@@ -137,3 +136,65 @@ If you only want to commit specific files:
 git add ../backend/app.py ../backend/models.py
 git commit -m "Updated app and models"
 git push origin main
+
+
+
+
+++++++++++++++++++++++++++++++++
+Downloading an old version of a project from GitHub can be done through the web interface or using Git commands.
+   Using Git Commands (for cloned repositories)
+Clone the Repository (if not already cloned):
+Code
+
+    git clone <repository_url>
+Navigate to the Repository Directory.
+Code
+
+    cd <repository_name>
+View Commit History.
+Code
+
+    git log --oneline
+This will display a list of commits with their abbreviated hashes and messages. Checkout the Desired Commit.
+Code
+
+    git checkout <commit_hash>
+Replace <commit_hash> with the full or abbreviated hash of the commit you want to download. This will change your local working directory to reflect the state of the repository at that commit.
+Create a New Branch (Optional): If you want to work on this old version without affecting your main branch, you can create a new branch from this commit:
+Code
+
+    git checkout -b <new_branch_name>
+Note: Downloading a ZIP from the web interface provides a snapshot without the Git history. Using Git commands allows you to actively work with different versions and retain the full version control capabilities.
+
+
+======================================================
+
+Rename the local branch:
+If you are currently on the branch you want to rename: 
+Code
+
+    git branch -m new-branch-name
+
+f you are on a different branch:
+Code
+
+    git branch -m old-branch-name new-branch-name
+2. Push the new branch to the remote repository and delete the old remote branch:
+Code
+
+git push origin -u new-branch-name
+git push origin --delete old-branch-name
+
+
+If it still errors, do a fresh fetch and reset:
+
+git fetch origin
+git rebase origin/main
+
+
+If you don’t care about remote history (overwrite everything)
+
+You can force push:
+
+git push -u origin main --force
+

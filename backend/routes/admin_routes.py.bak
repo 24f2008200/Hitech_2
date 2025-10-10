@@ -82,7 +82,7 @@ class SlotResource(Resource):
     method_decorators = [admin_required]
 
     def delete(self, slot_id):
-
+        """Delete a parking slot"""
         slot = ParkingSpot.query.get_or_404(int(slot_id))
         if slot.status == "O":
             return {"error": "Cannot delete occupied slot"}, 400

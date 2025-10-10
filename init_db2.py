@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash
 from backend.app import create_app, db
 from backend.models import User
 from Others.reservations_data import reservations_data
-from backend.extensions import db, bcrypt  
+from backend.extensions import db 
 import random
 
 app = create_app(False,1)

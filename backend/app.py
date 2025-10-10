@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from flask_cors import CORS
 
 import redis
-from backend.extensions import db, bcrypt, jwt ,cache
+from backend.extensions import db, jwt ,cache
 from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -23,7 +23,7 @@ def create_app(use_redis = False, large_data = 0):
     app = Flask(__name__, instance_relative_config=True)
 
     CORS(app,
-     resources={r"/*": {"origins": "http://localhost:5173"}},
+     resources={r"/*": {"origins": {"http://localhost:5173", "http://127.0.0.1:5173"}}},
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization", "X-Requested-With"])
     if large_data == 2:
@@ -82,7 +82,6 @@ def create_app(use_redis = False, large_data = 0):
 
     # Init extensions
     db.init_app(app)
-    bcrypt.init_app(app)
     jwt.init_app(app)
     cache.init_app(app)
     Migrate(app, db)
@@ -93,7 +92,7 @@ def create_app(use_redis = False, large_data = 0):
     from backend.routes.user_routes import user_bp
     from backend.diagnostics import diagnostics_bp
 
-    app.register_blueprint(diagnostics_bp, url_prefix="/admin") 
+    app.register_blueprint(diagnostics_bp, url_prefix="/api/admin") 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(user_bp)
@@ -112,4 +111,7 @@ if __name__ == "__main__":
         large_data = 0
     app = create_app(use_redis,large_data)
     port = int(os.environ.get("FLASK_PORT", 5000))
+    # with app.app_context():
+    #     for rule in app.url_map.iter_rules():
+    #         print(rule, rule.endpoint, rule.methods)
     app.run(debug=True, port=port)

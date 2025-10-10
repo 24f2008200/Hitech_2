@@ -5,10 +5,10 @@
       "name": "Flask Debug",
       "type": "debugpy",
       "request": "launch",
-      "python": "${workspaceFolder}/venv/Scripts/python.exe",
+      "python": "${workspaceFolder}/.venv/Scripts/python.exe",
       "module": "flask",
       "env": {
-        "FLASK_APP": "${workspaceFolder}/init_db2.py",
+        "FLASK_APP": "${relativeFile}",
         "FLASK_ENV": "development"
       },
       "args": [

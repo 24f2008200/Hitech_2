@@ -10,5 +10,6 @@ __pycache__/
 venv/
 node_modules/
 
+
 desktop.ini
 Thumbs.db

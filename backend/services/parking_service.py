@@ -5,7 +5,7 @@ from backend.models import ParkingLot
 @cache.cached(timeout=30, key_prefix="all_lots")
 def get_all_lots():
     lots = ParkingLot.query.all()
-    return jsonify([
+    return [
         {
             "id": lot.id,
             "name": lot.name,
@@ -21,4 +21,5 @@ def get_all_lots():
             ]
         }
         for lot in lots
-    ])
+    ]
+

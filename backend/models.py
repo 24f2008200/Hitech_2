@@ -3,7 +3,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from backend.app import db
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy import select, func
+from sqlalchemy import select, func ,inspect, text
+from sqlalchemy.exc import SQLAlchemyError
 
 class SerializerMixin:
     @declared_attr
@@ -12,10 +13,17 @@ class SerializerMixin:
 
     def to_dict(self):
         """Convert SQLAlchemy model instance into dictionary (safe for JSON)."""
-        return {
-            column.name: getattr(self, column.name)
-            for column in self.__table__.columns
-        }
+        result = {}
+        for column in self.__table__.columns:
+            value = getattr(self, column.name)
+
+            if "time" in column.name.lower() and isinstance(value, datetime):
+                result[column.name] = dateFormat(value)
+            else:
+                result[column.name] = value
+
+        return result
+
 
 class User(db.Model, SerializerMixin):
     __tablename__ = "user"
@@ -74,7 +82,7 @@ class ParkingLot(db.Model, SerializerMixin):
     @number_of_spots.expression
     def number_of_spots(cls):
         return (
-            select(func.count(ParkingSpot.id))
+            select(func.count(ParkingSpot.id)) 
             .where(ParkingSpot.lot_id == cls.id)
             .correlate(cls)
             .scalar_subquery()
@@ -87,7 +95,7 @@ class ParkingLot(db.Model, SerializerMixin):
             raise ValueError(f"Cannot delete spot {spot_id} because it is occupied")
         self.spots.remove(spot)
         db.session.delete(spot)
-        db.session.flush()  # ensure DB reflects removal immediately
+        db.session.flush() 
         self.max_slots -= 1
     def add_spot(self, label: str = None):
         new_spot_number = len(self.spots) + 1
@@ -95,17 +103,15 @@ class ParkingLot(db.Model, SerializerMixin):
         new_spot = ParkingSpot(lot_id=self.id, label=new_label, status="A")
         self.spots.append(new_spot)
         self.max_slots += 1
-        db.session.flush()  # ensure DB reflects addition immediately
-    # 🔹 Function 2: resize spots
+        db.session.flush()  
+
     def resize_spots(self, new_count: int):
         current_count = len(self.spots)
 
-        if new_count > current_count:
-            # Add new spots
+        if new_count > current_count:            # Add new spots
             for i in range(current_count + 1, new_count + 1):
                 self.add_spot(label=f"{self.prefix} {i}")
-        elif new_count < current_count:
-            # Remove extra spots (only if they are not reserved)
+        elif new_count < current_count:            # Remove extra spots (only if they are not reserved)
             to_remove = [s for s in self.spots if s.status == "A"]
             to_remove = to_remove[: current_count - new_count]
             if len(to_remove) < (current_count - new_count):
@@ -131,8 +137,7 @@ class ParkingSpot(db.Model, SerializerMixin):
     def occupied(self):
         return self.status == 'O'
     @property
-    def current_reservation(self):
-        # returns the first active one
+    def current_reservation(self):        # returns the first active one
         for r in self.reservations:
             if r.end_time is None:
                 return r
@@ -155,11 +160,11 @@ class ParkingSpot(db.Model, SerializerMixin):
                 "label": self.label,
                 "status": self.status,
                 "vehicle_number": r.vehicle_number if r else None,
-                "start_time": r.start_time if r else None,
+                "start_time": dateFormat(r.start_time) if r else None,
                 "user_name": u.name if u else None,
                 "driver_contact": r.driver_contact if r else None,
                 "driver_name": r.driver_name if r else None,
-                "end_time": r.end_time if r else None,
+                "end_time": dateFormat(r.end_time) if r else None,
                 "total_earnings": sum_fee if sum_fee > 0 else None
             } 
         else:
@@ -170,11 +175,11 @@ class ParkingSpot(db.Model, SerializerMixin):
                 "label": self.label,
                 "status": self.status,
                 "vehicle_number": r.vehicle_number if r else None,
-                "occupied_since": r.start_time if r else None,
+                "occupied_since": dateFormat(r.start_time) if r else None,
                 "user_name": r.user.name if r and r.user else None,
                 "driver_contact": r.driver_contact if r else None,
                 "driver_name": r.driver_name if r else None,
-                "end_time": r.end_time if r else None,
+                "end_time": dateFormat(r.end_time) if r else None,
                 "total_earnings": sum_fee if sum_fee > 0 else None
         }
 
@@ -199,6 +204,12 @@ class Reservation(db.Model, SerializerMixin):
     def to_dict(self):
         return model_to_dict(self)
     
+    def get_slot_for_car(vehicle_number):
+        return db.session.query(ParkingSpot).join(Reservation).filter(
+            Reservation.vehicle_number == vehicle_number,
+            Reservation.end_time == None
+        ).first()
+     
     @hybrid_property
     def get_details(self):
 
@@ -207,15 +218,15 @@ class Reservation(db.Model, SerializerMixin):
                 "label": self.spot.label,
              
                 "vehicle_number": self.vehicle_number ,
-                "start_time": self.start_time ,
+                "start_time": dateFormat(self.start_time) ,
                 "user_name": self.user.name ,
                 "driver_contact": self.driver_contact ,
                 "driver_name": self.driver_name ,
-                "end_time": self.end_time ,
+                "end_time": dateFormat(self.end_time) ,
                 "total_earnings": self.parking_fee
         }
 
-    # def end_reservation(self, end_time, cost: float):
+    # def end_reservation(self, end_time, cost: float): 
     #     self.end_time = end_time
     #     self.parking_fee = cost
     #     self.active = False
@@ -226,7 +237,51 @@ def model_to_dict(obj):
     for col in obj.__table__.columns:
         value = getattr(obj, col.name)
         if isinstance(value, datetime):
-            result[col.name] = value.isoformat()  # safe for Vue inputs
+            result[col.name] = value.strftime("%Y-%m-%d %H:%M:%S") # safe for Vue inputs
         else:
             result[col.name] = value
     return result
+
+def dateFormat(value):
+    return value.strftime("%Y-%m-%d %H:%M") if value else None
+
+
+def search_all(search_term):
+    """
+    Search across all tables and text-convertible columns in the SQLAlchemy db.
+    Returns a list of dicts with table, column, row_id, and matched_value.
+    """
+
+    results = []
+    inspector = inspect(db.engine)
+
+    # Get all table names
+    tables = inspector.get_table_names()
+
+    with db.engine.connect() as conn:
+        for table in tables:            # Get all column names
+            columns = [col["name"] for col in inspector.get_columns(table)]
+
+            for col in columns:
+                try:
+                    query = text(f"""
+                        SELECT rowid as id, {col} as value
+                        FROM {table}
+                        WHERE CAST({col} AS TEXT) LIKE :term
+                    """)
+
+                    rows = conn.execute(query, {"term": f"%{search_term}%"}).fetchall()
+
+                    for row in rows:
+                        results.append({
+                            "table": table,
+                            "column": col,
+                            "row_id": row.id,
+                            "matched_value": row.value
+                        })
+                except SQLAlchemyError:
+                    print("Error")
+                    # Skip columns that can't be searched
+                    continue
+
+    return results
