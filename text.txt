@@ -10,7 +10,7 @@ python -m backend.init_db
 python -m init_db.app
 python -m backend.app
 
-python -m backend.app redis L
+python -m backend.app redis L 
 
 npm run dev
 

@@ -183,7 +183,7 @@ async function confirmBooking() {
     fetchLots(); // refresh list of lots
   } else {
     const errorData = await res.json();
-    console.log("Failed to book slot:", errorData);
+    // console.log("Failed to book slot:", errorData);
     alert("Failed to book slot: " + errorData.error);
   }
 }
