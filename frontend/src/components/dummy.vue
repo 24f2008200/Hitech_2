@@ -1,71 +1,3 @@
-<template>
-  <div class="container-fluid mt-4">
-    <h2>Parking Lots</h2>
-
-    <div class="row">
-      <ParkingLotCard v-for="lot in lots" :key="lot.id" :lot="lot" @edit-lot="handleEditLot"
-        @delete-lot="handleDeleteLot" @slot-click="showSlotDetails" />
-    </div>
-    <!-- Popup modal -->
-    <SlotDetailModal :visible="isModalOpen" :slot="selectedSlot" :lot="selectedLot"
-      @deleteSlot="handleDeleteSlot" @close="isModalOpen = false" />
-    <!-- Add Lot Button -->
-    <div class="text-center mt-4">
-      <!-- <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#lotModal" @click="handleEditLot(null)">  -->
-      <button class="btn btn-primary btn-lg" @click="handleEditLot(null)">
-        + Add Lot
-      </button>
-    </div>
-
-    <!-- Add/Edit Lot Modal -->
-    <div class="modal fade" id="lotModal" tabindex="-1" aria-labelledby="lotModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="lotModalLabel">{{ isEdit ? "Edit Lot" : "Add New Lot" }}</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="updateLot">
-              <div class="mb-3">
-                <label class="form-label">Name</label>
-                <input v-model="formLot.name" type="text" class="form-control" required />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Prefix</label>
-                <input v-model="formLot.prefix" type="text" class="form-control" required />
-              </div>
-              
-              <div class="mb-3">
-                <label class="form-label">Address</label>
-                <input v-model="formLot.address" type="text" class="form-control" required />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Pin Code</label>
-                <input v-model="formLot.pin_code" type="text" class="form-control" required />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Price (₹)</label>
-                <input v-model.number="formLot.price" type="number" class="form-control" required />
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Number of Spots</label>
-                <input v-model.number="formLot.number_of_spots" type="number" class="form-control" required />
-              </div>
-              <div class="d-flex justify-content-between">
-                <button type="submit" class="btn btn-success">{{ isEdit ? "Update" : "Save" }}</button>
-                <button type="button" class="btn btn-secondary me-2" @click="closeModalAndRefresh">
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { Modal } from 'bootstrap'
@@ -196,3 +128,7 @@ async function closeModalAndRefresh() {
 // --------------------------------------------------
 onMounted(fetchLots)
 </script>
+
+<template>
+  <!-- You can keep your existing template section as-is -->
+</template>

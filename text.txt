@@ -12,6 +12,7 @@ python -m backend.app
 
 python -m backend.app redis L 
 
+
 npm run dev
 
 Ubuntu (WSL) terminal

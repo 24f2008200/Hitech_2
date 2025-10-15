@@ -82,7 +82,7 @@ class ParkingLot(db.Model, SerializerMixin):
     @number_of_spots.expression
     def number_of_spots(cls):
         return (
-            select(func.count(ParkingSpot.id))
+            select(func.count(ParkingSpot.id)) 
             .where(ParkingSpot.lot_id == cls.id)
             .correlate(cls)
             .scalar_subquery()
