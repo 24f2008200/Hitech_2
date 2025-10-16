@@ -2,12 +2,12 @@
 import os
 import csv
 import io
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,timezone
 from celery import shared_task
 from sqlalchemy import func
 from celery_app import celery
-from yourapp import create_app, db  # adapt to your app factory
-from yourapp.models import User, ParkingLot, Reservation, ParkingSpot
+from backend.app import create_app, db  # adapt to your app factory
+from backend.models import User, ParkingLot, Reservation, ParkingSpot
 from jinja2 import Template
 import smtplib
 from email.message import EmailMessage
@@ -54,7 +54,7 @@ def users_to_remind(days_inactive=7):
     Return users who haven't visited in `days_inactive` days OR for whom admin created parking lot recently.
     Adjust logic as required.
     """
-    cutoff = datetime.utcnow() - timedelta(days=days_inactive)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days_inactive)
     # users with last reservation older than cutoff OR never reserved
     sub = db.session.query(Reservation.user_id, func.max(Reservation.created_at).label('last_visit')).group_by(Reservation.user_id).subquery()
     q = db.session.query(User).outerjoin(sub, User.id == sub.c.user_id).filter(
@@ -63,7 +63,7 @@ def users_to_remind(days_inactive=7):
     return q.all()
 
 def users_with_new_parking_lot(since_days=7):
-    cutoff = datetime.utcnow() - timedelta(days=since_days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=since_days)
     # If any parking lot created since cutoff, notify all users who haven't visited recently (or all users by policy)
     lots = ParkingLot.query.filter(ParkingLot.created_at >= cutoff).all()
     if not lots:
@@ -74,14 +74,10 @@ def users_with_new_parking_lot(since_days=7):
 
 @shared_task(name='tasks.daily_reminder_runner')
 def daily_reminder_runner():
-    """
-    This runner runs once per day and decides when to enqueue per-user reminders
-    (so we respect user-preferred times). For simplicity, here we run the check and
-    send messages for users whose preferred hour matches current hour (IST).
-    """
-    now_utc = datetime.utcnow()
+
+    now_utc = datetime.now(timezone.utc) 
     # convert to IST offset if needed; we can store user.preferred_reminder_time as "HH:MM" in user's timezone
-    users = User.query.filter(User.is_active==True).all()
+    users = User.query.filter(User.active==True).all()
     for u in users:
         if not u.receive_reminders:  # boolean flag
             continue
@@ -119,7 +115,7 @@ def monthly_report_runner():
     Run on 1st of month -> create and email reports for all users.
     """
     # For each user, generate HTML report and email
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     # month range: previous month
     first_of_this_month = datetime(now.year, now.month, 1)
     import calendar
@@ -129,7 +125,7 @@ def monthly_report_runner():
     start_period = datetime(prev_year, prev_month, 1)
     end_period = datetime(prev_year, prev_month, calendar.monthrange(prev_year, prev_month)[1], 23, 59, 59)
 
-    users = User.query.filter(User.is_active==True).all()
+    users = User.query.filter(User.active==True).all()
     for u in users:
         # gather stats
         reservations = Reservation.query.filter(
@@ -138,10 +134,10 @@ def monthly_report_runner():
             Reservation.created_at <= end_period
         ).all()
         total_booked = len(reservations)
-        amount_spent = sum(r.cost for r in reservations if getattr(r, "cost", None) is not None)
+        amount_spent = sum(r.cost for r in reservations if getattr(r, "parking_fee", None) is not None)
         # most used lot
         from collections import Counter
-        lot_ids = [r.parking_lot_id for r in reservations if hasattr(r, "parking_lot_id")]
+        lot_ids = [r.spot.lot_id for r in reservations if hasattr(r, "parking_lot_id")]
         most_used = None
         if lot_ids:
             counted = Counter(lot_ids).most_common(1)
@@ -222,7 +218,7 @@ def generate_export_csv(user_id):
     output.close()
 
     # Store file: dev use local path, prod use S3
-    filename = f"user_{user_id}_reservations_{datetime.utcnow().strftime('%Y%m%dT%H%M%SZ')}.csv"
+    filename = f"user_{user_id}_reservations_{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}.csv"
     storage_dir = os.environ.get("REPORT_STORAGE_DIR", "uploads/reports")
     os.makedirs(storage_dir, exist_ok=True)
     file_path = os.path.join(storage_dir, filename)
