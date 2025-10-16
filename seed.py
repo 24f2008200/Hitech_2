@@ -1,13 +1,20 @@
 from backend.models import db, User, ParkingLot, ParkingSpot, Reservation
-from datetime import datetime, timedelta , UTC
+from datetime import datetime, timedelta, UTC
 from werkzeug.security import generate_password_hash
 from backend.app import create_app, db
 from backend.models import User
-from Others.reservations_data import reservations_data
-from backend.extensions import db 
 import random
 
-app = create_app(False,1)
+size = 0
+
+no_users = 5 if size == 0 else 25 if size ==1 else 50
+no_lots = 5 if size == 0 else 10 if size ==1 else 20
+no_drivers = 5 if size == 0 else 50 if size ==1 else 100
+no_cars = 5 if size == 0 else 50 if size ==1 else 100
+
+
+
+app = create_app(False,size)
 
 with app.app_context():
     db.drop_all()
@@ -22,7 +29,7 @@ with app.app_context():
     "Ram","Murugan","Chandran","Devika"
     ]
 
-    # Sample addresses in Indian cities
+    # Sample addresses in Indian cities 
     streets = [
         "5th Cross Road", "MG Road", "Park Street", "Anna Salai", "Connaught Place",
         "Sector 18", "Baner Road", "Banjara Hills", "Civil Lines", "Lalbagh Road",
@@ -59,7 +66,7 @@ with app.app_context():
     )
     db.session.add(admin)
     users = []
-    for i in range(len(names)):
+    for i in range(no_users):
         name = names[i]
         email = f"{name.lower()}@example.com"
         pwd = f"{name[:3].lower()}123"
@@ -245,7 +252,7 @@ with app.app_context():
         max_slots=10
     )
     ]
-
+    lots = lots[:no_lots]
     for lot in lots:
         db.session.add(lot)
         db.session.flush()
@@ -372,8 +379,8 @@ with app.app_context():
     # Example car/driver pools
     state_codes = ["MH", "DL", "KA", "TN", "WB", "UP", "RJ", "GJ", "KL", "AP", "MP", "HR", "PB", "BR", "OD"]
 
-    NUM_CARS = 100
-    drivers = drivers[:50]
+    NUM_CARS = no_cars
+    drivers = drivers[:no_drivers]
     NUM_DRIVERS = len(drivers)
     car_numbers = []
 
