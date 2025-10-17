@@ -11,6 +11,7 @@ class MyModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(db.DateTime(timezone = True), default= lambda : datetime.now(timezone.utc))
     updated_at = db.Column(db.DateTime(timezone = True), default= lambda : datetime.now(timezone.utc),onupdate= lambda : datetime.now(timezone.utc))
+    active = db.Column(db.Boolean, default=True)
     @declared_attr
     def __tablename__(cls):
         return cls.__name__.lower()
@@ -38,6 +39,9 @@ class User(MyModel):
     is_admin = db.Column(db.Boolean, default=False)
     role = db.Column(db.String(50), default="user")  # NEW
     address = db.Column(db.String(512))
+    receive_reminders = db.Column(db.Boolean, default=True)
+    reminder_time = db.Column(db.String(10))
+
     reservations = db.relationship("Reservation", back_populates="user")
 
     def set_password(self, password: str):
@@ -57,7 +61,7 @@ class ParkingLot(MyModel):
     address = db.Column(db.String(512))
     pin_code = db.Column(db.String(20))
     max_slots = db.Column(db.Integer, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
 
     spots = db.relationship("ParkingSpot", backref="lot", cascade="all, delete-orphan")
 
@@ -127,7 +131,6 @@ class ParkingSpot(MyModel):
     lot_id = db.Column(db.Integer, db.ForeignKey("parkinglot.id"), nullable=False)
     status = db.Column(db.String(1), nullable=False, default="A")  # A=available, O=occupied
     label = db.Column(db.String(50))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     reservations = db.relationship("Reservation", back_populates="spot", lazy=True)
     @property
     def occupied(self):
@@ -188,7 +191,7 @@ class Reservation(MyModel):
     start_time = db.Column(db.DateTime, default=datetime.utcnow)
     end_time = db.Column(db.DateTime, nullable=True)
     parking_fee = db.Column(db.Float, nullable=True)
-    active = db.Column(db.Boolean, default=True)
+
 
     # Relationships
     user = db.relationship("User", back_populates="reservations")
