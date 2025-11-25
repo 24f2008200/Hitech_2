@@ -58,7 +58,7 @@ with app.app_context():
     admin = User(
         name="Admin",
         email="admin@example.com",
-        password=generate_password_hash("admin123"),
+        password=generate_password_hash("123"),
         role="admin",
         is_admin=True,
         mobile="123454321",
@@ -69,7 +69,7 @@ with app.app_context():
     for i in range(no_users):
         name = names[i]
         email = f"{name.lower()}@example.com"
-        pwd = f"{name[:3].lower()}123"
+        pwd = "123"        #f"{name[:3].lower()}123"
         password = generate_password_hash(pwd)
         mobile = "".join([str(random.randint(6, 9))] + [str(random.randint(0, 9)) for _ in range(9)])
         address = str(random.randint(6, 9)) +"," + random.choice(streets) \

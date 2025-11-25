@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project>
 	<paths>
-		<left>I:\IIT\Term5\Projects\Vehicle\</left>
-		<right>I:\IIT\Term5\Projects\Vehicle\Mad2_P\</right>
-		<filter>*.py ;*.html</filter>
+		<left>I:\IIT\Term5\Projects\Vehicle</left>
+		<right>I:\IIT\Term5\Projects\Vehicle\Mad2_P</right>
+		<filter>*.py ;*.html ;*.vue</filter>
 		<subfolders>1</subfolders>
 		<left-readonly>0</left-readonly>
 		<right-readonly>0</right-readonly>
